@@ -1,0 +1,45 @@
+const content = {
+      series: [
+        {
+          title: "Konosuba Season 1",
+          image: " 2.jpg",
+
+          description: "An intergalactic adventure across unknown planets.",
+
+          episodes: [
+            { title: "Episode 1 ", link: " https://drive.google.com/file/d/110UyhRjYnSOomo3-9Wh30BZonjVHr7Nu/preview" },
+
+            { title: "Episode 2 ", link: "https://drive.google.com/file/d/1128cXGsLQ_wUcjls8hcZbfy-YbeRwChc/preview " },
+
+            { title: "Episode 3 ", link: "https://drive.google.com/file/d/110VFc93Wq49TvnsWq9AclCCsyt5scLSC/preview " },
+
+            { title: "Episode 4 ", link: "https://drive.google.com/file/d/119B_PFF3wtTyQMu3pu4-rBpN1rrfI7dR/preview " },
+
+            { title: "Episode 5  ", link: " https://drive.google.com/file/d/116FV6qv7Hjdpkj4v7deuoactP-ee-T9A/preview" },
+
+            { title: "Episode 6  ", link: "https://drive.google.com/file/d/11A96GHkRYHQ1uwRwa4eMiVBxbqM5YcmA/preview " },
+
+            { title: "Episode 7  ", link: "https://drive.google.com/file/d/11TiSpcFJr2N8r7GPyIGgmgy2tHfnQTtL/preview " },
+
+            { title: "Episode 8 ", link: "https://drive.google.com/file/d/11tAEoUZsUeQa4ja3-Nnt76nOKR2_w5wa/preview " },
+
+            { title: "Episode 9 ", link: "https://drive.google.com/file/d/11V8IleXjjcnlUAparkf44XBFEUwxK8Ou/preview " },
+
+            { title: "Episode 10 ", link: " https://drive.google.com/file/d/11uRZmLQxY52jeIsQKiw6vf2d1jTiCBlr/preview" },
+
+          ]
+        },
+
+        {
+          title: "Your Name",
+          image: "https://drive.google.com/file/d/12AKbRJ99P-j6yGMFmjCkC1WjVKwXJvTw/view?usp=drivesdk",
+
+          description: "A detective unravels a conspiracy in a neon city.",
+
+          episodes: [
+            { title: "watch now", link:" https://drive.google.com/file/d/10e007gPw7-zykD4XnHU_v_HV3mS7Y72Y/preview" },
+
+          ]
+        }
+      ]
+    };
