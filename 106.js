@@ -40,6 +40,21 @@ const content = {
             { title: "watch now", link:" https://drive.google.com/file/d/10e007gPw7-zykD4XnHU_v_HV3mS7Y72Y/preview" },
 
           ]
-        }
+        },
+
+
+
+
+{
+          title: "The Life List",
+          image: "  ",
+
+          description: " After  her mother's passing Alex is forced to complete a list she compiled when she was 13 only so she could have some of her mother's inherentence ,but on her Journey she finds secrets about herself  and finds herself",
+
+          episodes: [
+            { title: "watch now", link:"https://drive.google.com/file/d/12tRqoJ9sXycE7RODnlxu11HVR7wcZbtL/preview  " },
+
+          ]
+        },
       ]
     };
