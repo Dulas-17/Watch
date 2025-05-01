@@ -32,7 +32,7 @@ const content = {
 
         {
           title: "Your Name",
-          image: " 1.jpg",
+          image: "https://drive.google.com/file/d/12AKbRJ99P-j6yGMFmjCkC1WjVKwXJvTw/view?usp=drivesdk",
 
           description: "A detective unravels a conspiracy in a neon city.",
 
