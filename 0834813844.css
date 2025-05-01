@@ -1,0 +1,190 @@
+* {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #121212;
+      color: #fff;
+      line-height: 1.6;
+    }
+
+    nav {
+      background: #1f1f1f;
+      padding: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    nav button {
+      padding: 0.6rem 1.2rem;
+      background: #00cec9;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.3s;
+    }
+
+    nav button:hover {
+      background: #01a3a4;
+    }
+
+    .section {
+      display: none;
+      padding: 1rem;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .search-box {
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    .search-box input {
+      width: 90%;
+      max-width: 500px;
+      padding: 0.8rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+    }
+
+    .series-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .series-item {
+      background: #2c2c2c;
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .series-item:hover {
+      background: #3a3a3a;
+    }
+
+    .series-item img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .series-details {
+      text-align: center;
+    }
+
+    .series-details img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .episode-buttons {
+      margin-top: 1rem;
+    }
+
+    .episode-buttons button {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 0.5rem auto;
+      padding: 1rem;
+      background: #0984e3;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .episode-buttons button:hover {
+      background: #067fd2;
+    }
+
+    #videoFullScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+    }
+
+    #videoFullScreen iframe {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    #videoFullScreen button {
+      padding: 1rem;
+      background: red;
+      color: white;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      html {
+        font-size: 15px;
+      }
+
+      nav {
+        flex-direction: column;
+      }
+
+      .series-details img {
+        max-height: 250px;
+      }
+
+      .episode-buttons button {
+        font-size: 0.95rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      html {
+        font-size: 14px;
+      }
+
+      .series-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .episode-buttons button {
+        padding: 0.8rem;
+      }
+
+      nav button {
+        width: 100%;
+      }
+    }
