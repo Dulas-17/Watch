@@ -47,7 +47,7 @@ const content = {
 
 {
           title: "The Life List",
-          image: "ll.jpeg  ",
+          image: "ll.jpeg",
 
           description: " After  her mother's passing Alex is forced to complete a list she compiled when she was 13 only so she could have some of her mother's inherentence ,but on her Journey she finds secrets about herself  and finds herself",
 
