@@ -2,7 +2,7 @@ const content = {
       series: [
         {
           title: "Konosuba Season 1",
-          image: " 2.jpg",
+          image: " 2.jpeg",
 
           description: "An intergalactic adventure across unknown planets.",
 
@@ -32,7 +32,7 @@ const content = {
 
         {
           title: "Your Name",
-          image: "https://drive.google.com/file/d/12AKbRJ99P-j6yGMFmjCkC1WjVKwXJvTw/view?usp=drivesdk",
+          image: "1.jpeg",
 
           description: "A detective unravels a conspiracy in a neon city.",
 
