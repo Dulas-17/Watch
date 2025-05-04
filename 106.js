@@ -60,6 +60,7 @@ const content = {
 
 
 
+
 {
           title: "The Life List",
           image: "ll.jpeg",
@@ -71,5 +72,25 @@ const content = {
 
           ]
         },
+
+
+
+{
+          title: "Power Rangers",
+          image: "c.jpeg",
+
+          description: "",
+
+          episodes: [
+            { title: "watch now", link:"https://drive.google.com/file/d/13hoZ6s2CMHviJVyi3v0Gp9AjBTln1erK/preview" },
+          ]
+        },
+
+
+
+
+
+
+
       ]
     };
