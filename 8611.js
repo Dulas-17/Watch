@@ -76,3 +76,33 @@
     window.onload = () => {
       showSeriesList();
     };
+
+
+
+
+  // Function to set a cookie
+  function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+  }
+
+  // Function to get a cookie
+  function getCookie(name) {
+    return document.cookie.split('; ').reduce((r, v) => {
+      const parts = v.split('=');
+      return parts[0] === name ? decodeURIComponent(parts[1]) : r
+    }, '');
+  }
+
+  // Save scroll position to cookie when user scrolls
+  window.addEventListener('scroll', function () {
+    setCookie('scrollPosition', window.scrollY, 7); // expires in 7 days
+  });
+
+  // Restore scroll position from cookie when page loads
+  window.addEventListener('load', function () {
+    const savedPosition = getCookie('scrollPosition');
+    if (savedPosition) {
+      window.scrollTo(0, parseInt(savedPosition));
+    }
+  });
