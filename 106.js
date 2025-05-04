@@ -77,7 +77,7 @@ const content = {
 
 {
           title: "Power Rangers",
-          image: "c.jpeg",
+          image: "pr.jpeg",
 
           description: "",
 
