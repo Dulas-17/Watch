@@ -30,6 +30,8 @@
       });
     }
 
+
+
     function showSeriesDetails(index) {
       const s = content.series[index];
       const container = document.getElementById('seriesDetails');
@@ -40,11 +42,22 @@
         <div class="episode-buttons">
           ${s.episodes.map(ep => `<button onclick="playEpisode('${ep.link}')">${ep.title}</button>`).join('')}
         </div>
-        <button onclick="goBackToList()">Back</button>
+        <button onclick="goBackToList()">Back to Series</button>
       `;
       document.getElementById('seriesList').innerHTML = '';
       container.style.display = 'block';
+      document.querySelector('.search-box').style.display = 'none'; // hide search bar
     }
+
+    function goBackToList() {
+      document.getElementById('seriesDetails').style.display = 'none';
+      showSeriesList();
+      document.querySelector('.search-box').style.display = 'block'; // show search bar
+    }
+
+
+
+
 
     function playEpisode(link) {
       const player = document.getElementById('videoFullScreen');
@@ -58,10 +71,7 @@
       player.style.display = 'none';
     }
 
-    function goBackToList() {
-      document.getElementById('seriesDetails').style.display = 'none';
-      showSeriesList();
-    }
+    
 
     window.onload = () => {
       showSeriesList();
