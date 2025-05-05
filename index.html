@@ -10,6 +10,7 @@
 
   <nav>
     <button onclick="showSection('home')">Home</button>
+ <button onclick="showSection('movies')">Movies</button>
     <button onclick="showSection('series')">Series</button>
   </nav>
 
@@ -29,6 +30,18 @@
 
     <div id="seriesDetails" class="series-details" style="display: none;"></div>
   </div>
+
+
+ <div id="movies" class="section">
+    <h2>Movies</h2>
+    <div class="search-box">
+      <input type="text" id="movieSearch" placeholder="Search for a movie..." onkeyup="searchContent('movies')">
+    </div>
+    <div id="movieList" class="series-grid"></div>
+    <div id="movieDetails" class="series-details" style="display: none;"></div>
+  </div>
+
+
 
   <div id="videoFullScreen">
     <button onclick="closeFullScreen()">Back</button>
