@@ -82,7 +82,7 @@ const content = {
           description: "",
 
           episodes: [
-            { title: "watch now", link:"https://drive.google.com/file/d/13hoZ6s2CMHviJVyi3v0Gp9AjBTln1erK/preview" },
+            { title: "watch now", link:"https://drive.google.com/file/d/17looZTle9cX9De1f6gN5QUcBhopDoKvx/preview" },
           ]
         },
 
