@@ -150,8 +150,9 @@
       background: red;
       color: white;
       border: none;
-      font-size: 1rem;
+      font-size: 1.3rem;
       cursor: pointer;
+     width:50px;
     }
 
     @media (max-width: 768px) {
