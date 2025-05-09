@@ -1,20 +1,11 @@
 const content = {
       series: [
 
-       {
-          title: "Captain America:Brave new world",
-          image: "c.jpeg",
-
-          description: "The rise of a new captain amarica ",
-
-          episodes: [
-            { title: "watch now", link:" https://drive.google.com/file/d/13ZnENWshn2eFwju7D0VQP8mmbxp0o1Xo/preview " },
-          ]
-        },
+       
 
 
 
-
+//Series 
         {
           title: "Konosuba Season 1",
           image: " 2.jpeg",
@@ -44,6 +35,36 @@ const content = {
 
           ]
         },
+
+
+
+
+
+
+]},
+    
+
+
+
+
+
+
+
+//Movies
+movies: [
+
+
+{
+          title: "Captain America:Brave new world",
+          image: "c.jpeg",
+
+          description: "The rise of a new captain amarica ",
+
+          episodes: [
+            { title: "watch now", link:" https://drive.google.com/file/d/13ZnENWshn2eFwju7D0VQP8mmbxp0o1Xo/preview " },
+          ]
+        },
+
 
         {
           title: "Your Name",
@@ -92,5 +113,4 @@ const content = {
 
 
 
-      ]
-    };
+      ]};
