@@ -2,7 +2,7 @@ const content = {
       series: [
         {
           title: "Konosuba Season 1",
-          image: "2.jpg",
+          image: "2.jpeg",
           description: "An intergalactic adventure across unknown planets.",
           episodes: [
             { title: "Episode 1", link: "https://drive.google.com/file/d/110UyhRjYnSOomo3-9Wh30BZonjVHr7Nu/preview" },
@@ -37,7 +37,7 @@ const content = {
 
 {
           title: "The Life List",
-          image:"11.jpeg",
+          image:"ll.jpeg",
                     description: " After  her mother's passing Alex is forced to complete a list she compiled when she was 13 only so she could have some of her mother's inherentence ,but on her Journey she finds secrets about herself. ",
        link:"https://drive.google.com/file/d/12tRqoJ9sXycE7RODnlxu11HVR7wcZbtL/preview  "
    
