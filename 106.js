@@ -14,9 +14,12 @@ const content = {
             { title: "Episode 7", link: "https://drive.google.com/file/d/11TiSpcFJr2N8r7GPyIGgmgy2tHfnQTtL/preview" },
             { title: "Episode 8", link: "https://drive.google.com/file/d/11tAEoUZsUeQa4ja3-Nnt76nOKR2_w5wa/preview" },
             { title: "Episode 9", link: "https://drive.google.com/file/d/11V8IleXjjcnlUAparkf44XBFEUwxK8Ou/preview" },
-            { title: "Episode 10", link: "https://drive.google.com/file/d/11uRZmLQxY52jeIsQKiw6vf2d1jTiCBlr/preview" }
+            { title: "Episode 10", link: "https://drive.google.com/file/d/11uRZmLQxY52jeIsQKiw6vf2d1jTiCBlr/preview" },
           ]
         }
+
+
+
       ],
 
 
@@ -28,7 +31,7 @@ const content = {
           image:"1.jpeg",
           description: "A beautiful romantic fantasy that transcends time and space.",
           link: "https://drive.google.com/file/d/10e007gPw7-zykD4XnHU_v_HV3mS7Y72Y/preview"
-        }
+        }, 
 
 
 
@@ -38,7 +41,7 @@ const content = {
                     description: " After  her mother's passing Alex is forced to complete a list she compiled when she was 13 only so she could have some of her mother's inherentence ,but on her Journey she finds secrets about herself. ",
        link:"https://drive.google.com/file/d/12tRqoJ9sXycE7RODnlxu11HVR7wcZbtL/preview  "
    
-        }
+        },
 
 
 {
@@ -46,7 +49,7 @@ const content = {
           image:"pr.jpeg",
           description: " .",
             link:"https://drive.google.com/file/d/17looZTle9cX9De1f6gN5QUcBhopDoKvx/preview" 
-        }
+        },
 
 
 
