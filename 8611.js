@@ -26,7 +26,7 @@ function showSection(id) {
         div.innerHTML = `
           <img src="${s.image}" alt="${s.title}" />
           <h4>${s.title}</h4>
-          <button onclick="showSeriesDetails(${i})">Video List</button>
+          <button onclick="showSeriesDetails(${i})">Open</button>
         `;
         container.appendChild(div);
       });
@@ -57,7 +57,7 @@ function showSection(id) {
         <div class="episode-buttons">
           ${s.episodes.map(ep => `<button onclick="playEpisode('${ep.link}')">${ep.title}</button>`).join('')}
         </div>
-        <button onclick="goBackToList('series')">Back to Series</button>
+        <button onclick="goBackToList('series')">🔙</button>
       `;
       document.getElementById('seriesList').innerHTML = '';
       container.style.display = 'block';
@@ -73,7 +73,7 @@ function showSection(id) {
         <div class="episode-buttons">
           <button onclick="playEpisode('${m.link}')">Watch Now</button>
         </div>
-        <button onclick="goBackToList('movies')">Back to Movies</button>
+        <button onclick="goBackToList('movies')">🔙</button>
       `;
       document.getElementById('movieList').innerHTML = '';
       container.style.display = 'block';
