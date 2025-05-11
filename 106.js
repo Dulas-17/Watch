@@ -2,7 +2,7 @@ const content = {
       series: [
         {
           title: "Konosuba Season 1",
-          image: "2.jpeg",
+          image: "https://drive.google.com/file/d/12AKbRJ99P-j6yGMFmjCkC1WjVKwXJvTw/preview",
           description: "An intergalactic adventure across unknown planets.",
           episodes: [
             { title: "Episode 1", link: "https://drive.google.com/file/d/110UyhRjYnSOomo3-9Wh30BZonjVHr7Nu/preview" },
