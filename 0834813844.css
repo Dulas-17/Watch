@@ -74,7 +74,7 @@ nav button:hover {
 
 .series-item {
   background: #2c2c2c;
-  padding: 1rem;
+  padding: 0.5rem;
   border-radius: 10px;
   text-align: center;
   cursor: pointer;
@@ -82,7 +82,7 @@ nav button:hover {
 }
 
 .series-item:hover {
-  background: #3a3a3a;
+  background: skyblue;
 }
 
 .series-item img {
