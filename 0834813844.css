@@ -34,16 +34,16 @@ nav button {
   font-size: 1rem;
   transition: background 0.3s;
   width: 100%;
-  max-width: 200px;
+  max-width: 480px;
 }
 
 nav button:hover {
-  background: #01a3a4;
+  background: skyblue;
 }
 
 .section {
   display: none;
-  padding: 1rem;
+  padding: 0.5rem;
   max-width: 1100px;
   margin: auto;
 }
