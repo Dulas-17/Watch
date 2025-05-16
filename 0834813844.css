@@ -74,21 +74,21 @@ nav button:hover {
 
 .series-item {
   background: #2c2c2c;
-  padding: 1rem;
-  border-radius: 10px;
+  padding: 0.5rem;
+  border-radius: 5px;
   text-align: center;
   cursor: pointer;
   transition: background 0.3s;
 }
 
 .series-item:hover {
-  background: #3a3a3a;
+  background: skyblue;
 }
 
 .series-item img {
   width: 100%;
   height: auto;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4/ 4;
   object-fit: cover;
   border-radius: 5px;
 }
