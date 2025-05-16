@@ -1,192 +1,212 @@
 * {
-      box-sizing: border-box;
-    }
+  box-sizing: border-box;
+}
 
-    html {
-      font-size: 16px;
-    }
+html {
+  font-size: 16px;
+}
 
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #121212;
-      color: #fff;
-      line-height: 1.6;
-    }
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #121212;
+  color: #fff;
+  line-height: 1.6;
+}
 
-    nav {
-      background: #1f1f1f;
-      padding: 1rem;
-      display: flex;
-      flex-wrap: row;
-      justify-content: center;
-      gap: 1rem;
-    }
+nav {
+  background: #1f1f1f;
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
 
-    nav button {
-      padding: 0.6rem 1.2rem;
-      background: #00cec9;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.3s;
-      width:100%;
-    }
+nav button {
+  padding: 0.6rem 1.2rem;
+  background: #00cec9;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s;
+  width: 100%;
+  max-width: 200px;
+}
 
-    nav button:hover {
-      background: #01a3a4;
-    }
+nav button:hover {
+  background: #01a3a4;
+}
 
-    .section {
-      display: none;
-      padding: 1rem;
-      max-width: 1100px;
-      margin: auto;
-    }
+.section {
+  display: none;
+  padding: 1rem;
+  max-width: 1100px;
+  margin: auto;
+}
 
-    .active {
-      display: block;
-    }
+.active {
+  display: block;
+}
 
-    .search-box {
-      margin: 1.5rem 0;
-      text-align: center;
-    }
+.search-box {
+  margin: 1.5rem 0;
+  text-align: center;
+}
 
-    .search-box input {
-      width: 90%;
-      max-width: 500px;
-      padding: 0.8rem;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: none;
-    }
+.search-box input {
+  width: 90%;
+  max-width: 500px;
+  padding: 0.8rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: none;
+}
 
-    .series-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1rem;
-    }
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
 
-    .series-item {
-      background: #2c2c2c;
-      padding: 1rem;
-      border-radius: 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
+.series-item {
+  background: #2c2c2c;
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.3s;
+}
 
-    .series-item:hover {
-      background: #3a3a3a;
-    }
+.series-item:hover {
+  background: #3a3a3a;
+}
 
-    .series-item img {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 3/3;
-      object-fit: cover;
-      border-radius: 5px;
-    }
+.series-item img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 5px;
+}
 
-    .series-details {
-      text-align: center;
-    }
+.series-details {
+  text-align: center;
+}
 
-    .series-details img {
-      width: 100%;
-      max-height: 100%;
-      object-fit: cover;
-      border-radius: 10px;
-    }
+.series-details img {
+  width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
 
-    .episode-buttons {
-      margin-top: 1rem;
-    }
+.episode-buttons {
+  margin-top: 1rem;
+}
 
-    .episode-buttons button {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      margin: 0.5rem auto;
-      padding: 1rem;
-      background: #0984e3;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
+.episode-buttons button {
+  display: block;
+  width: 100%;
+  margin: 0.5rem auto;
+  padding: 1rem;
+  background: #0984e3;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
 
-    .episode-buttons button:hover {
-      background: #067fd2;
-    }
+.episode-buttons button:hover {
+  background: #067fd2;
+}
 
-    #videoFullScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      z-index: 9999;
-      display: none;
-      flex-direction: column;
-    }
+#videoFullScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+}
 
-    #videoFullScreen iframe {
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
+#videoFullScreen iframe {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
 
-    #videoFullScreen button {
-      padding: 0.5rem;
-      background: red;
-      color: white;
-      border: none;
-      font-size: 1.3rem;
-      cursor: pointer;
-     width:50px;
-    }
+#videoFullScreen button {
+  padding: 0.5rem;
+  background: red;
+  color: white;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  width: 50px;
+}
 
-    @media (max-width: 768px) {
-      html {
-        font-size: 20px;
-      }
+/* Tablet screens (≤768px) */
+@media (max-width: 768px) {
+  html {
+    font-size: 18px;
+  }
 
-      nav {
-        flex-direction: row;
-      }
+  nav {
+    flex-direction: row;
+  }
 
-      .series-details img {
-        max-height: 100%;
-      }
+  .series-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
 
-      .episode-buttons button {
-        font-size: 0.95rem;
-      }
-    }
+  .series-item img {
+    aspect-ratio: 1 / 1;
+  }
 
-    @media (max-width: 480px) {
-      html {
-        font-size: 14px;
-      }
+  .episode-buttons button {
+    font-size: 0.95rem;
+  }
+}
 
-      .series-grid {
-        grid-template-columns: 1fr;
-      }
+/* Phone screens (≤480px) */
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
 
-      .episode-buttons button {
-        padding: 0.8rem;
-      }
+  nav {
+    flex-direction: column;
+  }
 
-      nav button {
-        width: 100%;
-      }
-    }
+  nav button {
+    width: 100%;
+  }
+
+  .series-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .series-item {
+    padding: 0.5rem;
+  }
+
+  .series-item img {
+    aspect-ratio: 1 / 1;
+  }
+
+  .episode-buttons button {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+}
