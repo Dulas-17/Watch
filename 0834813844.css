@@ -185,7 +185,7 @@ nav button:hover {
   }
 
   nav {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   nav button {
