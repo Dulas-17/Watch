@@ -26,7 +26,7 @@ function showSection(id) {
         div.innerHTML = `
           <img src="${s.image}" alt="${s.title}" />
           <h4>${s.title}</h4>
-          <button onclick="showSeriesDetails(${i})">Open</button>
+          <button class="btn" onclick="showSeriesDetails(${i})">Open</button>
         `;
         container.appendChild(div);
       });
@@ -41,7 +41,7 @@ function showSection(id) {
         div.innerHTML = `
           <img src="${m.image}" alt="${m.title}" />
           <h4>${m.title}</h4>
-          <button onclick="showMovieDetails(${i})">Watch</button>
+          <button class="btn" onclick="showMovieDetails(${i})">Watch</button>
         `;
         container.appendChild(div);
       });
