@@ -38,7 +38,8 @@ nav button {
 }
 
 nav button:hover {
-  background: skyblue;
+  background: gold;
+margin-top:0.5rem;
 }
 
 .section {
