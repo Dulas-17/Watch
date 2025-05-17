@@ -210,3 +210,18 @@ nav button:hover {
     font-size: 0.9rem;
   }
 }
+
+.btn{
+padding:0.2rem;
+font-size:1rem;
+font-weight:bold;
+width:50%;
+border-radius:10px;
+background:gold;
+}
+
+.btn:hover{
+background:linear-gradient(120deg,blue,gold);
+padding:0.5rem;
+margin:0.5rem;
+}
