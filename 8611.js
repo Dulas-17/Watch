@@ -62,7 +62,7 @@
         div.innerHTML = `
           <img src="${s.image}" alt="${s.title}" />
           <h4>${s.title}</h4>
-          <button onclick="showSeriesDetails(${i})">Video List</button>
+          <button onclick="showSeriesDetails(${i})"class="btn">Open</button>
         `;
         container.appendChild(div);
       });
