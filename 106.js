@@ -1,7 +1,20 @@
 const content = {
       series: [
+
+               {
+title: "Vinland Saga (s1) ",
+image: "vl.jpg",
+description: " ",
+ episodes: [
+                   { title: "Episode 1",  link: "https://drive.google.com/file/d/15yJ5dEEQuC-9_rq5KHXWbnEEpNS-nnXV/preview " },
+                   { title: "Episode 2",  link: "https://drive.google.com/file/d/16Gpu5FyQawcZkiznl2Cddu_mHF-ZEkik/preview " },  
+   
+]},
+
+
+
         {
-          title: "Konosuba Season 1",
+          title: "Konosuba (s1)",
           image: "2.jpeg",
           description: "An intergalactic adventure across unknown planets.",
           episodes: [
@@ -16,7 +29,7 @@ const content = {
             { title: "Episode 9", link: "https://drive.google.com/file/d/11V8IleXjjcnlUAparkf44XBFEUwxK8Ou/preview" },
             { title: "Episode 10", link: "https://drive.google.com/file/d/11uRZmLQxY52jeIsQKiw6vf2d1jTiCBlr/preview" },
           ]
-        }
+        },
 
 
 
