@@ -84,7 +84,7 @@
         div.innerHTML = `
           <img src="${m.image}" alt="${m.title}" />
           <h4>${m.title}</h4>
-          <button onclick="showMovieDetails(${i})">Watch</button>
+          <button onclick="showMovieDetails(${i})" class="btn">Watch </button>
         `;
         container.appendChild(div);
       });
@@ -105,7 +105,7 @@
         <div class="episode-buttons">
           ${s.episodes.map(ep => `<button onclick="playEpisode('${ep.link}')">${ep.title}</button>`).join('')}
         </div>
-        <button onclick="goBackToList('series')">Back to Series</button>
+        <button onclick="goBackToList('series')"class="btn">Back</button>
       `;
       document.getElementById('seriesList').innerHTML = '';
       container.style.display = 'block';
@@ -124,7 +124,7 @@
         <div class="episode-buttons">
           <button onclick="playEpisode('${m.link}')">Watch Now</button>
         </div>
-        <button onclick="goBackToList('movies')">Back to Movies</button>
+        <button onclick="goBackToList('movies')"class="btn">Back</button>
       `;
       document.getElementById('movieList').innerHTML = '';
       container.style.display = 'block';
