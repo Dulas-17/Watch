@@ -9,13 +9,13 @@ html {
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background: #121212;
-  color: #fff;
+  background: #1a1a2e; /* Deeper, more sophisticated dark background */
+  color: #e0e0e0; /* Softer white for better contrast */
   line-height: 1.6;
 }
 
 nav {
-  background: #1f1f1f;
+  background: #16213e; /* Slightly darker than body for depth */
   padding: 1rem;
   display: flex;
   flex-wrap: row;
@@ -25,21 +25,21 @@ nav {
 
 nav button {
   padding: 0.6rem 1.2rem;
-  background: #00cec9;
-  color: #fff;
+  background: #0f3460; /* Deep blue-teal for primary actions */
+  color: #e0e0e0;
   border: none;
   border-radius: 5px;
   font-weight: bold;
   cursor: pointer;
   font-size: 1rem;
-  transition: background 0.3s;
+  transition: background 0.3s, transform 0.3s; /* Add transform for a subtle hover effect */
   width: 100%;
   max-width: 480px;
 }
 
 nav button:hover {
-  background: gold;
-margin-top:0.5rem;
+  background: #e94560; /* Vibrant coral for hover, very eye-catching */
+  transform: translateY(-3px); /* Lift button slightly on hover */
 }
 
 .section {
@@ -74,16 +74,17 @@ margin-top:0.5rem;
 }
 
 .series-item {
-  background: #2c2c2c;
+  background: #232946; /* A dark purplish-blue for item cards */
   padding: 0.1rem;
   border-radius: 10px;
   text-align: center;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.3s, transform 0.3s;
 }
 
 .series-item:hover {
-  background: skyblue;
+  background: #4e4a67; /* Lighter, more inviting shade on hover */
+  transform: translateY(-5px); /* Lift card slightly on hover */
 }
 
 .series-item img {
@@ -114,17 +115,18 @@ margin-top:0.5rem;
   width: 100%;
   margin: 0.5rem auto;
   padding: 1rem;
-  background: #0984e3;
-  color: #fff;
+  background: #533483; /* Rich purple for episode buttons */
+  color: #e0e0e0;
   border: none;
   border-radius: 5px;
   font-size: 1rem;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.3s, transform 0.3s;
 }
 
 .episode-buttons button:hover {
-  background: #067fd2;
+  background: #fb6aae; /* Brighter pink for hover */
+  transform: scale(1.02); /* Slightly enlarge button on hover */
 }
 
 #videoFullScreen {
@@ -148,7 +150,7 @@ margin-top:0.5rem;
 
 #videoFullScreen button {
   padding: 0.5rem;
-  background: red;
+  background: #f44336; /* Classic red for close video */
   color: white;
   border: none;
   font-size: 1.3rem;
@@ -212,17 +214,19 @@ margin-top:0.5rem;
   }
 }
 
-.btn{
-padding:0.2rem;
-font-size:1rem;
-font-weight:bold;
-width:50%;
-border-radius:10px;
-background:gold;
+.btn {
+  padding: 0.2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  width: 50%;
+  border-radius: 10px;
+  background: #e94560; /* Use the vibrant coral for the general button */
+  color: #e0e0e0;
+  transition: background 0.3s, padding 0.3s, margin 0.3s;
 }
 
-.btn:hover{
-background:linear-gradient(120deg,blue,gold);
-padding:0.5rem;
-margin:0.5rem;
+.btn:hover {
+  background: linear-gradient(120deg, #0f3460, #e94560); /* Gradient from deep teal to coral */
+  padding: 0.5rem;
+  margin: 0.5rem;
 }
