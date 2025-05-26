@@ -6,7 +6,7 @@ title: "Vinland Saga (s1) ",
 image: "vl.jpg",
 description: " ",
  episodes: [
-                   { title: "Episode 1",  link: "https://drive.google.com/file/d/15yJ5dEEQuC-9_rq5KHXWbnEEpNS-nnXV/preview " },
+                   { title: "Episode 1", link:"https://drive.google.com/file/d/113mX-HEzjpbiIuNqaLqVz04O8SZaA5fL/preview" },
                    { title: "Episode 2",  link:"https://drive.google.com/file/d/16Gpu5FyQawcZkiznl2Cddu_mHF-ZEkik/preview" },  
    
 ]},
