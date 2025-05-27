@@ -1,4 +1,4 @@
-    // --- New/Modified JavaScript for Remembering State ---
+// --- New/Modified JavaScript for Remembering State ---
 
     // Function to save the current scroll position of the document
     function saveScrollPosition() {
@@ -31,6 +31,10 @@
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       saveState(id); // Save the active section
+
+      // Ensure nav and search are visible when switching sections normally
+      document.querySelector('nav').style.display = 'flex'; // Assuming nav is flex or block
+      document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block'); // Assuming search-box is block
 
       if (id === 'series') {
         showSeriesList();
@@ -111,6 +115,11 @@
       container.style.display = 'block';
       saveState('series', 'series', i); // Save active section, detail type, and index
       window.scrollTo(0, 0); // Scroll to top of details
+
+      // --- ADDED LOGIC: Hide navigation and search bar ---
+      document.querySelector('nav').style.display = 'none';
+      document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'none');
+      // --- END ADDED LOGIC ---
     }
 
     // Modified showMovieDetails to save the movie index
@@ -130,6 +139,11 @@
       container.style.display = 'block';
       saveState('movies', 'movie', i); // Save active section, detail type, and index
       window.scrollTo(0, 0); // Scroll to top of details
+
+      // --- ADDED LOGIC: Hide navigation and search bar ---
+      document.querySelector('nav').style.display = 'none';
+      document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'none');
+      // --- END ADDED LOGIC ---
     }
 
     // Modified goBackToList to clear detail state
@@ -144,6 +158,11 @@
         saveState('movies'); // Only save section, clear detail state
       }
       window.scrollTo(0, 0); // Scroll to top of list
+
+      // --- ADDED LOGIC: Show navigation and search bar ---
+      document.querySelector('nav').style.display = 'flex'; // Revert to original display for nav
+      document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block'); // Revert to original display for search-box
+      // --- END ADDED LOGIC ---
     }
 
     // Original playEpisode and closeFullScreen remain the same
@@ -184,6 +203,10 @@
                 } else if (lastDetailType === 'movie') {
                     showMovieDetails(parseInt(lastDetailIndex, 10));
                 }
+                // --- ADDED: Ensure nav/search are hidden if resuming into a detail view ---
+                document.querySelector('nav').style.display = 'none';
+                document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'none');
+                // --- END ADDED ---
             } else {
                 // If only a section was remembered (not a specific detail view),
                 // ensure the detail display is hidden and restore general scroll.
@@ -192,6 +215,10 @@
                 } else if (lastActiveSection === 'movies') {
                     document.getElementById('movieDetails').style.display = 'none';
                 }
+                // --- ADDED: Ensure nav/search are visible if resuming into a list view ---
+                document.querySelector('nav').style.display = 'flex';
+                document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block');
+                // --- END ADDED ---
             }
             restoreScrollPosition(); // Restore scroll position after everything else is set up
         } else {
@@ -199,6 +226,10 @@
             showSection('home');
             showSeriesList();
             showMovieList();
+            // --- ADDED: Ensure nav/search are visible on first load ---
+            document.querySelector('nav').style.display = 'flex';
+            document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block');
+            // --- END ADDED ---
         }
 
         // Add a global scroll listener to save position periodically
