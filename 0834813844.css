@@ -139,7 +139,7 @@ nav button:hover {
   color: #d6ecff;
   border: 1px solid #5a9bd8;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 2rem;
   cursor: pointer;
   transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
 }
