@@ -2,12 +2,12 @@ const content = {
       series: [
 
                {
-title: "Vinland Saga (s1) ",
-image: "Images/b.jpg",
+title: "Bleach TYBW P2",
+image: "Images/cour2.jpeg",
 description: " ",
  episodes: [
                    { title: "Episode 1", link:"https://drive.google.com/file/d/10D0xtKf_CPz5ODJAiX2A5wfyCg57NcIg/preview" },
-                   { title: "Episode 2",  link:"https://drive.google.com/file/d/16Gpu5FyQawcZkiznl2Cddu_mHF-ZEkik/preview" },  
+                     
    
 ]},
 
