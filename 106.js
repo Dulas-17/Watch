@@ -3,7 +3,7 @@ const content = {
 
                {
 title: "Vinland Saga (s1) ",
-image: "vl.jpg",
+image: "Images/b.jpg",
 description: " ",
  episodes: [
                    { title: "Episode 1", link:"https://drive.google.com/file/d/10D0xtKf_CPz5ODJAiX2A5wfyCg57NcIg/preview" },
@@ -15,7 +15,7 @@ description: " ",
 
         {
           title: "Konosuba (s1)",
-          image: "2.jpeg",
+          image: "Images/2.jpeg",
           description: "An intergalactic adventure across unknown planets.",
           episodes: [
             { title: "Episode 1", link: "https://drive.google.com/file/d/110UyhRjYnSOomo3-9Wh30BZonjVHr7Nu/preview" },
@@ -41,7 +41,7 @@ description: " ",
       movies: [
         {
           title: "Your Name",
-          image:"1.jpeg",
+          image:"Images/1.jpeg",
           description: "A beautiful romantic fantasy that transcends time and space.",
           link: "https://drive.google.com/file/d/10e007gPw7-zykD4XnHU_v_HV3mS7Y72Y/preview"
         }, 
@@ -50,7 +50,7 @@ description: " ",
 
 {
           title: "The Life List",
-          image:"ll.jpeg",
+          image:"Images/ll.jpeg",
                     description: " After  her mother's passing Alex is forced to complete a list she compiled when she was 13 only so she could have some of her mother's inherentence ,but on her Journey she finds secrets about herself. ",
        link:"https://drive.google.com/file/d/12tRqoJ9sXycE7RODnlxu11HVR7wcZbtL/preview  "
    
@@ -59,7 +59,7 @@ description: " ",
 
 {
           title: "Power Rangers",
-          image:"pr.jpeg",
+          image:"Images/pr.jpeg",
           description: " .",
             link:"https://drive.google.com/file/d/17looZTle9cX9De1f6gN5QUcBhopDoKvx/preview" 
         },
