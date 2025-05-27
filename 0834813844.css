@@ -186,12 +186,17 @@ nav button:hover {
   background: #f87171;
 }
 
+
 /* Responsive behavior - Always 3 items in grid */
 @media (max-width: 1024px) {
   .series-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+
+
+
 
 @media (max-width: 768px) {
   .series-grid {
@@ -206,7 +211,14 @@ nav button:hover {
   nav button {
     flex-shrink: 0;
   }
+.h4{
+font-size:1.3rem;
 }
+}
+
+
+
+
 
 @media (max-width: 480px) {
   html {
@@ -230,7 +242,12 @@ nav button:hover {
 nav {
     flex-direction: row;
   }
+.h4{
+font-size:1rem;
 }
+}
+
+
 
 .btn {
   padding: 0.4rem;
