@@ -203,6 +203,9 @@ nav button:hover {
   nav button {
     flex-shrink: 0;
   }
+nav button {
+        width: 100%;
+}
 }
 
 @media (max-width: 480px) {
@@ -223,6 +226,9 @@ nav button:hover {
     padding: 0.8rem;
     font-size: 0.9rem;
   }
+nav button {
+        width: 100%;
+}
 }
 
 .btn {
