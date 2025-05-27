@@ -147,7 +147,7 @@ nav button:hover {
 .episode-buttons button:hover {
   background: #5a9bd8;
   color: #fff;
-  transform: scale(1.02);
+  transform: scale(1.08);
   box-shadow: 0 0 10px #5a9bd8;
 }
 
@@ -206,9 +206,6 @@ nav button:hover {
   nav button {
     flex-shrink: 0;
   }
-nav button {
-        width: 100%;
-}
 }
 
 @media (max-width: 480px) {
@@ -229,9 +226,7 @@ nav button {
     padding: 0.8rem;
     font-size: 0.9rem;
   }
-nav button {
-        width: 100%;
-}
+
 nav {
     flex-direction: row;
   }
