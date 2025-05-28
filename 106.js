@@ -2,7 +2,7 @@ const content = {
       series: [
 
                {
-title: "Bleach TYBW P2",
+title: "Bleach:TYBW P2",
 image: "Images/cour2.jpeg",
 description: " ",
  episodes: [
@@ -45,7 +45,7 @@ description: " ",
 
       movies: [
         {
-          title: "Your Name",
+          title: "Your Name(sub)",
           image:"Images/1.jpeg",
           description: "A beautiful romantic fantasy that transcends time and space.",
           link: "https://drive.google.com/file/d/10e007gPw7-zykD4XnHU_v_HV3mS7Y72Y/preview"
