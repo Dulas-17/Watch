@@ -7,6 +7,11 @@ image: "Images/cour2.jpeg",
 description: " ",
  episodes: [
                    { title: "Episode 1", link:"https://drive.google.com/file/d/10D0xtKf_CPz5ODJAiX2A5wfyCg57NcIg/preview" },
+                   { title: "Episode 2",  link:"https://drive.google.com/file/d/1-K6_2qaz1ZCz7u54FSvNX-hPq3qbqmZf/preview" },
+                   { title: "Episode 3",                  link:"https://drive.google.com/file/d/1-TQNzstys6szmuu-5iPmnxmZ6-oznFc2/preview" },
+
+
+
                      
    
 ]},
