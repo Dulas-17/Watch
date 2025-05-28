@@ -50,7 +50,7 @@ description: " ",
 
 {
           title: "The Life List",
-          image:"Images/ll.jpeg",
+          image:"Images/tll.jpeg",
                     description: " After  her mother's passing Alex is forced to complete a list she compiled when she was 13 only so she could have some of her mother's inherentence ,but on her Journey she finds secrets about herself. ",
        link:"https://drive.google.com/file/d/12tRqoJ9sXycE7RODnlxu11HVR7wcZbtL/preview  "
    
