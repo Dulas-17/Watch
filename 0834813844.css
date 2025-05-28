@@ -100,7 +100,7 @@ nav button:hover {
 
 .series-item:hover {
   background: #2b3c57;
-  transform: scale(1.06);
+  transform: scale(1.09);
   box-shadow: 0 0 10px rgba(90, 155, 216, 0.5);
 }
 
@@ -269,12 +269,12 @@ font-size:1rem;
 }
 
 .back{
-  padding: 1rem;
+  padding: 1rem 2rem;
   font-size: 0.8rem;
   font-weight: bold;
   border-radius: 10px;
-  background: #5a9bd8;
-  color: red;
+  background: red;
+  color: black;
   border: none;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -283,6 +283,6 @@ font-size:1rem;
 .back:hover {
   background: #81b6ec;
   color: #000;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow: 0 0 8px #5a9bd8;
 }
