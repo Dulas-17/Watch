@@ -10,20 +10,20 @@
 
   <nav>
     <button onclick="showSection('home')">Home</button>
- <button onclick="showSection('movies')">Movies</button>
+    <button onclick="showSection('movies')">Movies</button>
     <button onclick="showSection('series')">Series</button>
-  </nav>
+    <button onclick="showSection('watchLater')">Watch Later</button> </nav>
 
   <div id="home" class="section active">
     <h1>Baywatch</h1>
-<p>NB:The page is still under development</p>
+    <p>NB:The page is still under development</p>
     <p>we currently only have 2 uploads </p>
   </div>
 
   <div id="series" class="section">
     <h2>Shows</h2>
     <div class="search-box">
-      <input type="text" id="seriesSearch" placeholder="Search for a series..." onkeyup="searchContent()">
+      <input type="text" id="seriesSearch" placeholder="Search for a series..." onkeyup="searchContent('series')">
     </div>
 
     <div id="seriesList" class="series-grid"></div>
@@ -31,8 +31,7 @@
     <div id="seriesDetails" class="series-details" style="display: none;"></div>
   </div>
 
-
- <div id="movies" class="section">
+  <div id="movies" class="section">
     <h2>Movies</h2>
     <div class="search-box">
       <input type="text" id="movieSearch" placeholder="Search for a movie..." onkeyup="searchContent('movies')">
@@ -41,7 +40,12 @@
     <div id="movieDetails" class="series-details" style="display: none;"></div>
   </div>
 
-
+  <div id="watchLater" class="section">
+    <h2>Watch Later</h2>
+    <div id="watchLaterList" class="series-grid">
+      <p id="noWatchLaterItems" style="display: none;">No items in your Watch Later list yet.</p>
+    </div>
+  </div>
 
   <div id="videoFullScreen">
     <button onclick="closeFullScreen()">🔙</button>
