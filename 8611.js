@@ -1,3 +1,12 @@
+// Function to write messages to the debug output div
+function logDebugMessage(message) {
+    const debugOutput = document.getElementById('debugOutput');
+    if (debugOutput) {
+        debugOutput.innerText += message + '\n';
+        debugOutput.scrollTop = debugOutput.scrollHeight; // Scroll to bottom
+    }
+}
+
 // --- New/Modified JavaScript for Remembering State ---
 
 // Function to save the current scroll position of the document
@@ -28,7 +37,7 @@ function saveState(sectionId, detailType = null, detailIndex = null) {
 
 // Modified showSection to also save the section ID
 function showSection(id) {
-  alert('showSection called with ID: ' + id); // DEBUG ALERT
+  logDebugMessage('showSection called with ID: ' + id);
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   saveState(id); // Save the active section
@@ -44,7 +53,7 @@ function showSection(id) {
     showMovieList();
     document.getElementById('movieDetails').style.display = 'none';
   } else if (id === 'watchLater') { // Call showWatchLaterList when 'watchLater' section is active
-    alert('Calling showWatchLaterList from showSection...'); // DEBUG ALERT
+    logDebugMessage('Calling showWatchLaterList from showSection...');
     showWatchLaterList();
   }
   window.scrollTo(0, 0); // Scroll to top of new section
@@ -101,7 +110,7 @@ function showMovieList(list = content.movies) {
 
 // Modified showSeriesDetails to save the series index
 function showSeriesDetails(i) {
-  alert('showSeriesDetails called for index: ' + i); // DEBUG ALERT
+  logDebugMessage('showSeriesDetails called for index: ' + i);
   const s = content.series[i];
   const container = document.getElementById('seriesDetails');
   document.getElementById('seriesList').innerHTML = ''; // Clear list when showing details
@@ -115,7 +124,7 @@ function showSeriesDetails(i) {
     <button onclick="goBackToList('series')"class="btn">Back</button>
   `;
   container.style.display = 'block'; // Ensure container is visible
-  alert('seriesDetails display set to block: ' + container.style.display); // DEBUG ALERT
+  logDebugMessage('seriesDetails display set to block: ' + container.style.display);
   saveState('series', 'series', i); // Save active section, detail type, and index
   window.scrollTo(0, 0); // Scroll to top of details
 
@@ -126,7 +135,7 @@ function showSeriesDetails(i) {
 
 // Modified showMovieDetails to save the movie index
 function showMovieDetails(i) {
-  alert('showMovieDetails called for index: ' + i); // DEBUG ALERT
+  logDebugMessage('showMovieDetails called for index: ' + i);
   const m = content.movies[i];
   const container = document.getElementById('movieDetails');
   document.getElementById('movieList').innerHTML = ''; // Clear list when showing details
@@ -140,7 +149,7 @@ function showMovieDetails(i) {
     <button onclick="goBackToList('movies')"class="btn">Back</button>
   `;
   container.style.display = 'block'; // Ensure container is visible
-  alert('movieDetails display set to block: ' + container.style.display); // DEBUG ALERT
+  logDebugMessage('movieDetails display set to block: ' + container.style.display);
   saveState('movies', 'movie', i); // Save active section, detail type, and index
   window.scrollTo(0, 0); // Scroll to top of details
 
@@ -151,7 +160,7 @@ function showMovieDetails(i) {
 
 // Modified goBackToList to clear detail state
 function goBackToList(type) {
-  alert('goBackToList called for type: ' + type); // DEBUG ALERT
+  logDebugMessage('goBackToList called for type: ' + type);
   if (type === 'series') {
     showSeriesList();
     document.getElementById('seriesDetails').style.display = 'none';
@@ -190,7 +199,7 @@ function addToWatchLater(itemIndex, itemType) {
     const item = itemContent[itemIndex];
 
     if (!item) {
-        alert(`Error: Item not found for type: ${itemType}, index: ${itemIndex}`); // DEBUG ALERT
+        logDebugMessage(`Error: Item not found for type: ${itemType}, index: ${itemIndex}`);
         return;
     }
 
@@ -208,29 +217,28 @@ function addToWatchLater(itemIndex, itemType) {
     if (!isDuplicate) {
         watchLaterItems.push(itemToAdd);
         localStorage.setItem('watchLater', JSON.stringify(watchLaterItems));
-        alert(`${itemToAdd.title} added to Watch Later!`);
-        alert('Watch Later items after add (JSON): ' + JSON.stringify(watchLaterItems)); // DEBUG ALERT
+        logDebugMessage(`${itemToAdd.title} added to Watch Later!`);
     } else {
-        alert(`${itemToAdd.title} is already in your Watch Later list.`);
+        logDebugMessage(`${itemToAdd.title} is already in your Watch Later list.`);
     }
 }
 
 // NEW FUNCTION: Show Watch Later List
 function showWatchLaterList() {
-    alert('showWatchLaterList started.'); // DEBUG ALERT
+    logDebugMessage('showWatchLaterList started.');
     const container = document.getElementById('watchLaterList');
     const noItemsMessage = document.getElementById('noWatchLaterItems');
     container.innerHTML = ''; // Clear previous items
-    alert('watchLaterList container cleared (innerHTML).'); // DEBUG ALERT
+    logDebugMessage('watchLaterList container cleared (innerHTML).');
 
     let watchLaterItems = JSON.parse(localStorage.getItem('watchLater')) || [];
-    alert('Watch Later items loaded from localStorage: ' + JSON.stringify(watchLaterItems)); // DEBUG ALERT
+    logDebugMessage('Watch Later items loaded from localStorage: ' + JSON.stringify(watchLaterItems)); // Keep this one, it's vital
 
     if (watchLaterItems.length === 0) {
-        alert('No Watch Later items, showing message.'); // DEBUG ALERT
+        logDebugMessage('No Watch Later items, showing message.');
         noItemsMessage.style.display = 'block'; // Show "No items" message
     } else {
-        alert(`Found ${watchLaterItems.length} Watch Later items, hiding message and rendering.`); // DEBUG ALERT
+        logDebugMessage(`Found ${watchLaterItems.length} Watch Later items, hiding message and rendering.`);
         noItemsMessage.style.display = 'none'; // Hide "No items" message
         watchLaterItems.forEach(item => {
             const div = document.createElement('div');
@@ -242,50 +250,49 @@ function showWatchLaterList() {
                 <button onclick="removeFromWatchLater(${item.index}, '${item.type}')" class="btn">Remove</button>
             `;
             container.appendChild(div);
-            alert('Appended item: ' + item.title + ' (Type: ' + item.type + ', Index: ' + item.index + ')'); // DEBUG ALERT
+            // Removed individual item append alerts
         });
     }
     // Ensure nav and search are visible when in watchLater section
     document.querySelector('nav').style.display = 'flex';
     document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block');
-    alert('showWatchLaterList finished. List should be visible now.'); // DEBUG ALERT
+    logDebugMessage('showWatchLaterList finished. List should be visible now.');
 }
 
 // NEW FUNCTION: Remove from Watch Later (FIXED TYPE COERCION)
 function removeFromWatchLater(itemIndex, itemType) {
-    alert('removeFromWatchLater called for index: ' + itemIndex + ', type: ' + itemType); // DEBUG ALERT 1
+    logDebugMessage('removeFromWatchLater called for index: ' + itemIndex + ', type: ' + itemType);
 
     let watchLaterItems = JSON.parse(localStorage.getItem('watchLater')) || [];
-    alert('BEFORE filter - Watch Later items: ' + JSON.stringify(watchLaterItems)); // DEBUG ALERT 2
+    logDebugMessage('BEFORE filter - Watch Later items: ' + JSON.stringify(watchLaterItems)); // Keep this one, it's vital
 
     const initialLength = watchLaterItems.length;
 
     // IMPORTANT FIX: Ensure item.index is parsed as an integer for comparison
     watchLaterItems = watchLaterItems.filter(item => {
         const match = (parseInt(item.index, 10) === parseInt(itemIndex, 10) && item.type === itemType);
-        // This alert will appear for EACH item in the list, so be prepared to tap OK multiple times
-        alert('Filtering: item.index=' + item.index + ' (' + typeof item.index + '), item.type=' + item.type + ' (' + typeof item.type + ') vs targetIndex=' + itemIndex + ' (' + typeof itemIndex + '), targetType=' + itemType + ' (' + typeof itemType + '). Match: ' + match); // DEBUG ALERT 3
+        // Removed per-item filter alerts
         return !match;
     });
 
-    alert('AFTER filter - Watch Later items: ' + JSON.stringify(watchLaterItems)); // DEBUG ALERT 4
+    logDebugMessage('AFTER filter - Watch Later items: ' + JSON.stringify(watchLaterItems)); // Keep this one, it's vital
 
     if (watchLaterItems.length < initialLength) {
         localStorage.setItem('watchLater', JSON.stringify(watchLaterItems));
-        alert('Item removed from Watch Later. localStorage updated.'); // DEBUG ALERT 5
+        logDebugMessage('Item removed from Watch Later. localStorage updated.');
         showWatchLaterList(); // Re-render the list after removal
     } else {
-        alert('Warning: Attempted to remove item not found, or filter failed.'); // DEBUG ALERT 6
+        logDebugMessage('Warning: Attempted to remove item not found, or filter failed.');
     }
 }
 
 // Initialize on DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
-    alert('DOMContentLoaded fired.'); // DEBUG ALERT
+    logDebugMessage('DOMContentLoaded fired.');
     const lastActiveSection = localStorage.getItem('lastActiveSection');
     const lastDetailType = localStorage.getItem('lastDetailType');
     const lastDetailIndex = localStorage.getItem('lastDetailIndex');
-    alert('Last active state on load: ' + JSON.stringify({ lastActiveSection, lastDetailType, lastDetailIndex })); // DEBUG ALERT
+    logDebugMessage('Last active state on load: ' + JSON.stringify({ lastActiveSection, lastDetailType, lastDetailIndex }));
 
     if (lastActiveSection) {
         showSeriesList();
@@ -295,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById(lastActiveSection).classList.add('active');
 
         if (lastDetailType && lastDetailIndex !== null) {
-            alert('Restoring to detail view.'); // DEBUG ALERT
+            logDebugMessage('Restoring to detail view.');
             if (lastDetailType === 'series') {
                 showSeriesDetails(parseInt(lastDetailIndex, 10));
             } else if (lastDetailType === 'movie') {
@@ -304,13 +311,13 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('nav').style.display = 'none';
             document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'none');
         } else {
-            alert('Restoring to list view.'); // DEBUG ALERT
+            logDebugMessage('Restoring to list view.');
             if (lastActiveSection === 'series') {
                 document.getElementById('seriesDetails').style.display = 'none';
             } else if (lastActiveSection === 'movies') {
                 document.getElementById('movieDetails').style.display = 'none';
             } else if (lastActiveSection === 'watchLater') {
-                alert('Restoring to Watch Later section.'); // DEBUG ALERT
+                logDebugMessage('Restoring to Watch Later section.');
                 showWatchLaterList();
             }
             document.querySelector('nav').style.display = 'flex';
@@ -318,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         restoreScrollPosition();
     } else {
-        alert('No state remembered, defaulting to home.'); // DEBUG ALERT
+        logDebugMessage('No state remembered, defaulting to home.');
         showSection('home');
         document.querySelector('nav').style.display = 'flex';
         document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block');
