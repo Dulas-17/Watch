@@ -28,7 +28,7 @@ function saveState(sectionId, detailType = null, detailIndex = null) {
 
 // Modified showSection to also save the section ID
 function showSection(id) {
-  console.log('showSection called with ID:', id); // DEBUG LOG
+  alert('showSection called with ID: ' + id); // DEBUG ALERT
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   saveState(id); // Save the active section
@@ -44,7 +44,7 @@ function showSection(id) {
     showMovieList();
     document.getElementById('movieDetails').style.display = 'none';
   } else if (id === 'watchLater') { // Call showWatchLaterList when 'watchLater' section is active
-    console.log('Calling showWatchLaterList from showSection...'); // DEBUG LOG
+    alert('Calling showWatchLaterList from showSection...'); // DEBUG ALERT
     showWatchLaterList();
   }
   window.scrollTo(0, 0); // Scroll to top of new section
@@ -101,7 +101,7 @@ function showMovieList(list = content.movies) {
 
 // Modified showSeriesDetails to save the series index
 function showSeriesDetails(i) {
-  console.log('showSeriesDetails called for index:', i); // DEBUG LOG
+  alert('showSeriesDetails called for index: ' + i); // DEBUG ALERT
   const s = content.series[i];
   const container = document.getElementById('seriesDetails');
   document.getElementById('seriesList').innerHTML = ''; // Clear list when showing details
@@ -115,7 +115,7 @@ function showSeriesDetails(i) {
     <button onclick="goBackToList('series')"class="btn">Back</button>
   `;
   container.style.display = 'block'; // Ensure container is visible
-  console.log('seriesDetails display set to block:', container.style.display); // DEBUG LOG
+  alert('seriesDetails display set to block: ' + container.style.display); // DEBUG ALERT
   saveState('series', 'series', i); // Save active section, detail type, and index
   window.scrollTo(0, 0); // Scroll to top of details
 
@@ -126,7 +126,7 @@ function showSeriesDetails(i) {
 
 // Modified showMovieDetails to save the movie index
 function showMovieDetails(i) {
-  console.log('showMovieDetails called for index:', i); // DEBUG LOG
+  alert('showMovieDetails called for index: ' + i); // DEBUG ALERT
   const m = content.movies[i];
   const container = document.getElementById('movieDetails');
   document.getElementById('movieList').innerHTML = ''; // Clear list when showing details
@@ -140,7 +140,7 @@ function showMovieDetails(i) {
     <button onclick="goBackToList('movies')"class="btn">Back</button>
   `;
   container.style.display = 'block'; // Ensure container is visible
-  console.log('movieDetails display set to block:', container.style.display); // DEBUG LOG
+  alert('movieDetails display set to block: ' + container.style.display); // DEBUG ALERT
   saveState('movies', 'movie', i); // Save active section, detail type, and index
   window.scrollTo(0, 0); // Scroll to top of details
 
@@ -151,7 +151,7 @@ function showMovieDetails(i) {
 
 // Modified goBackToList to clear detail state
 function goBackToList(type) {
-  console.log('goBackToList called for type:', type); // DEBUG LOG
+  alert('goBackToList called for type: ' + type); // DEBUG ALERT
   if (type === 'series') {
     showSeriesList();
     document.getElementById('seriesDetails').style.display = 'none';
@@ -190,8 +190,7 @@ function addToWatchLater(itemIndex, itemType) {
     const item = itemContent[itemIndex];
 
     if (!item) {
-        console.error(`Item not found for type: ${itemType}, index: ${itemIndex}`);
-        alert('Could not add item to Watch Later. Item not found.');
+        alert(`Error: Item not found for type: ${itemType}, index: ${itemIndex}`); // DEBUG ALERT
         return;
     }
 
@@ -210,7 +209,7 @@ function addToWatchLater(itemIndex, itemType) {
         watchLaterItems.push(itemToAdd);
         localStorage.setItem('watchLater', JSON.stringify(watchLaterItems));
         alert(`${itemToAdd.title} added to Watch Later!`);
-        console.log('Watch Later items after add:', watchLaterItems); // DEBUG LOG
+        alert('Watch Later items after add (JSON): ' + JSON.stringify(watchLaterItems)); // DEBUG ALERT
     } else {
         alert(`${itemToAdd.title} is already in your Watch Later list.`);
     }
@@ -218,20 +217,20 @@ function addToWatchLater(itemIndex, itemType) {
 
 // NEW FUNCTION: Show Watch Later List
 function showWatchLaterList() {
-    console.log('showWatchLaterList started.'); // DEBUG LOG
+    alert('showWatchLaterList started.'); // DEBUG ALERT
     const container = document.getElementById('watchLaterList');
     const noItemsMessage = document.getElementById('noWatchLaterItems');
     container.innerHTML = ''; // Clear previous items
-    console.log('watchLaterList container cleared.'); // DEBUG LOG
+    alert('watchLaterList container cleared (innerHTML).'); // DEBUG ALERT
 
     let watchLaterItems = JSON.parse(localStorage.getItem('watchLater')) || [];
-    console.log('Watch Later items loaded from localStorage:', watchLaterItems); // DEBUG LOG
+    alert('Watch Later items loaded from localStorage: ' + JSON.stringify(watchLaterItems)); // DEBUG ALERT
 
     if (watchLaterItems.length === 0) {
-        console.log('No Watch Later items, showing message.'); // DEBUG LOG
+        alert('No Watch Later items, showing message.'); // DEBUG ALERT
         noItemsMessage.style.display = 'block'; // Show "No items" message
     } else {
-        console.log(`Found ${watchLaterItems.length} Watch Later items, hiding message and rendering.`); // DEBUG LOG
+        alert(`Found ${watchLaterItems.length} Watch Later items, hiding message and rendering.`); // DEBUG ALERT
         noItemsMessage.style.display = 'none'; // Hide "No items" message
         watchLaterItems.forEach(item => {
             const div = document.createElement('div');
@@ -243,86 +242,84 @@ function showWatchLaterList() {
                 <button onclick="removeFromWatchLater(${item.index}, '${item.type}')" class="btn">Remove</button>
             `;
             container.appendChild(div);
-            console.log('Appended item:', item.title, 'Type:', item.type, 'Index:', item.index); // DEBUG LOG
+            alert('Appended item: ' + item.title + ' (Type: ' + item.type + ', Index: ' + item.index + ')'); // DEBUG ALERT
         });
     }
     // Ensure nav and search are visible when in watchLater section
     document.querySelector('nav').style.display = 'flex';
     document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block');
-    console.log('showWatchLaterList finished.'); // DEBUG LOG
+    alert('showWatchLaterList finished. List should be visible now.'); // DEBUG ALERT
 }
 
 // NEW FUNCTION: Remove from Watch Later (FIXED TYPE COERCION)
 function removeFromWatchLater(itemIndex, itemType) {
-    console.log('removeFromWatchLater called for index:', itemIndex, 'type:', itemType); // DEBUG LOG
+    alert('removeFromWatchLater called for index: ' + itemIndex + ', type: ' + itemType); // DEBUG ALERT 1
+
     let watchLaterItems = JSON.parse(localStorage.getItem('watchLater')) || [];
+    alert('BEFORE filter - Watch Later items: ' + JSON.stringify(watchLaterItems)); // DEBUG ALERT 2
+
     const initialLength = watchLaterItems.length;
 
     // IMPORTANT FIX: Ensure item.index is parsed as an integer for comparison
-    watchLaterItems = watchLaterItems.filter(item =>
-        !(parseInt(item.index, 10) === parseInt(itemIndex, 10) && item.type === itemType)
-    );
-    console.log('Watch Later items after filter:', watchLaterItems); // DEBUG LOG
+    watchLaterItems = watchLaterItems.filter(item => {
+        const match = (parseInt(item.index, 10) === parseInt(itemIndex, 10) && item.type === itemType);
+        // This alert will appear for EACH item in the list, so be prepared to tap OK multiple times
+        alert('Filtering: item.index=' + item.index + ' (' + typeof item.index + '), item.type=' + item.type + ' (' + typeof item.type + ') vs targetIndex=' + itemIndex + ' (' + typeof itemIndex + '), targetType=' + itemType + ' (' + typeof itemType + '). Match: ' + match); // DEBUG ALERT 3
+        return !match;
+    });
+
+    alert('AFTER filter - Watch Later items: ' + JSON.stringify(watchLaterItems)); // DEBUG ALERT 4
 
     if (watchLaterItems.length < initialLength) {
         localStorage.setItem('watchLater', JSON.stringify(watchLaterItems));
-        alert('Item removed from Watch Later.');
+        alert('Item removed from Watch Later. localStorage updated.'); // DEBUG ALERT 5
         showWatchLaterList(); // Re-render the list after removal
     } else {
-        console.warn('Attempted to remove item not found:', { index: itemIndex, type: itemType });
+        alert('Warning: Attempted to remove item not found, or filter failed.'); // DEBUG ALERT 6
     }
 }
 
 // Initialize on DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOMContentLoaded fired.'); // DEBUG LOG
+    alert('DOMContentLoaded fired.'); // DEBUG ALERT
     const lastActiveSection = localStorage.getItem('lastActiveSection');
     const lastDetailType = localStorage.getItem('lastDetailType');
     const lastDetailIndex = localStorage.getItem('lastDetailIndex');
-    console.log('Last active state:', { lastActiveSection, lastDetailType, lastDetailIndex }); // DEBUG LOG
+    alert('Last active state on load: ' + JSON.stringify({ lastActiveSection, lastDetailType, lastDetailIndex })); // DEBUG ALERT
 
     if (lastActiveSection) {
-        // First, load all lists (so content exists if details are to be shown)
         showSeriesList();
         showMovieList();
 
-        // Then, activate the remembered section
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(lastActiveSection).classList.add('active');
 
-        // If a specific detail was being viewed, show it
         if (lastDetailType && lastDetailIndex !== null) {
-            console.log('Restoring to detail view.'); // DEBUG LOG
+            alert('Restoring to detail view.'); // DEBUG ALERT
             if (lastDetailType === 'series') {
                 showSeriesDetails(parseInt(lastDetailIndex, 10));
             } else if (lastDetailType === 'movie') {
                 showMovieDetails(parseInt(lastDetailIndex, 10));
             }
-            // Ensure nav/search are hidden if resuming into a detail view
             document.querySelector('nav').style.display = 'none';
             document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'none');
         } else {
-            // If only a section was remembered (not a specific detail view),
-            // ensure the detail display is hidden and restore general scroll.
-            console.log('Restoring to list view.'); // DEBUG LOG
+            alert('Restoring to list view.'); // DEBUG ALERT
             if (lastActiveSection === 'series') {
                 document.getElementById('seriesDetails').style.display = 'none';
             } else if (lastActiveSection === 'movies') {
                 document.getElementById('movieDetails').style.display = 'none';
-            } else if (lastActiveSection === 'watchLater') { // If resuming to watchLater, show it
-                console.log('Restoring to Watch Later section.'); // DEBUG LOG
+            } else if (lastActiveSection === 'watchLater') {
+                alert('Restoring to Watch Later section.'); // DEBUG ALERT
                 showWatchLaterList();
             }
-            // Ensure nav/search are visible if resuming into a list view
             document.querySelector('nav').style.display = 'flex';
             document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block');
         }
-        restoreScrollPosition(); // Restore scroll position after everything else is set up
+        restoreScrollPosition();
     } else {
-        // If no state is remembered, default to 'home' and show lists
-        console.log('No state remembered, defaulting to home.'); // DEBUG LOG
-        showSection('home'); // This will call showSeriesList and showMovieList
-        // Ensure nav/search are visible on first load
+        alert('No state remembered, defaulting to home.'); // DEBUG ALERT
+        showSection('home');
         document.querySelector('nav').style.display = 'flex';
         document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block');
     }
