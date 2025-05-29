@@ -67,7 +67,7 @@
           <img src="${s.image}" alt="${s.title}" />
           <h4>${s.title}</h4>
           <button onclick="showSeriesDetails(${i})"class="btn">Open</button>
-        `;
+          <button onclick="addToWatchLater(${i}, 'series')"class="btn">Watch Later</button> `;
         container.appendChild(div);
       });
       // Restore scroll only if this is the initial load for the main list
@@ -89,7 +89,7 @@
           <img src="${m.image}" alt="${m.title}" />
           <h4>${m.title}</h4>
           <button onclick="showMovieDetails(${i})" class="btn">Watch </button>
-        `;
+          <button onclick="addToWatchLater(${i}, 'movie')"class="btn">Watch Later</button> `;
         container.appendChild(div);
       });
       // Restore scroll only if this is the initial load for the main list
@@ -109,7 +109,7 @@
         <div class="episode-buttons">
           ${s.episodes.map(ep => `<button onclick="playEpisode('${ep.link}')">${ep.title}</button>`).join('')}
         </div>
-        <button onclick="goBackToList('series')"class="back">Back</button>
+        <button onclick="goBackToList('series')"class="btn">Back</button>
       `;
       document.getElementById('seriesList').innerHTML = '';
       container.style.display = 'block';
@@ -133,7 +133,7 @@
         <div class="episode-buttons">
           <button onclick="playEpisode('${m.link}')">Watch Now</button>
         </div>
-        <button onclick="goBackToList('movies')"class="back">Back</button>
+        <button onclick="goBackToList('movies')"class="btn">Back</button>
       `;
       document.getElementById('movieList').innerHTML = '';
       container.style.display = 'block';
@@ -180,6 +180,36 @@
       // Restore scroll position after closing video player
       restoreScrollPosition();
     }
+
+    // --- NEW FUNCTION: Add to Watch Later ---
+    function addToWatchLater(itemIndex, itemType) {
+        let watchLaterItems = JSON.parse(localStorage.getItem('watchLater')) || [];
+
+        // Create an object to store item details
+        const itemToAdd = {
+            index: itemIndex,
+            type: itemType,
+            // You might want to add more details here for easier display later,
+            // e.g., title, image, description, but for now, index and type are enough to retrieve from 'content'
+            title: content[itemType][itemIndex].title,
+            image: content[itemType][itemIndex].image
+        };
+
+        // Check if the item is already in the watch later list to avoid duplicates
+        const isDuplicate = watchLaterItems.some(item =>
+            item.index === itemToAdd.index && item.type === itemToAdd.type
+        );
+
+        if (!isDuplicate) {
+            watchLaterItems.push(itemToAdd);
+            localStorage.setItem('watchLater', JSON.stringify(watchLaterItems));
+            alert(`${itemToAdd.title} added to Watch Later!`); // Simple feedback
+            console.log('Watch Later items:', watchLaterItems);
+        } else {
+            alert(`${itemToAdd.title} is already in your Watch Later list.`);
+        }
+    }
+    // --- END NEW FUNCTION ---
 
     // --- Initialize on DOM Content Loaded ---
     document.addEventListener('DOMContentLoaded', function() {
