@@ -42,6 +42,8 @@
       } else if (id === 'movies') {
         showMovieList();
         document.getElementById('movieDetails').style.display = 'none';
+      } else if (id === 'watchLater') { // ADDED: Call showWatchLaterList when 'watchLater' section is active
+        showWatchLaterList();
       }
       window.scrollTo(0, 0); // Scroll to top of new section
     }
@@ -63,11 +65,13 @@
         const div = document.createElement('div');
         div.className = 'series-item';
         // Changed to use an anonymous function to pass 'i' directly to avoid immediate execution issues with loops
+        // --- CORRECTED: Watch Later button is now INSIDE the div ---
         div.innerHTML = `
           <img src="${s.image}" alt="${s.title}" />
           <h4>${s.title}</h4>
-          <button onclick="showSeriesDetails(${i})"class="btn">Open</button>
-          <button onclick="addToWatchLater(${i}, 'series')"class="btn">Watch Later</button> `;
+          <button onclick="showSeriesDetails(${i})" class="btn">Open</button>
+          <button onclick="addToWatchLater(${i}, 'series')" class="btn">Watch Later</button>
+        `;
         container.appendChild(div);
       });
       // Restore scroll only if this is the initial load for the main list
@@ -83,13 +87,15 @@
       container.innerHTML = '';
       list.forEach((m, i) => {
         const div = document.createElement('div');
-        div.className = 'series-item';
+        div.className = 'series-item'; // Keep class name for styling consistency
         // Changed to use an anonymous function to pass 'i' directly to avoid immediate execution issues with loops
+        // --- CORRECTED: Watch Later button is now INSIDE the div ---
         div.innerHTML = `
           <img src="${m.image}" alt="${m.title}" />
           <h4>${m.title}</h4>
-          <button onclick="showMovieDetails(${i})" class="btn">Watch </button>
-          <button onclick="addToWatchLater(${i}, 'movie')"class="btn">Watch Later</button> `;
+          <button onclick="showMovieDetails(${i})" class="btn">Watch</button>
+          <button onclick="addToWatchLater(${i}, 'movie')" class="btn">Watch Later</button>
+        `;
         container.appendChild(div);
       });
       // Restore scroll only if this is the initial load for the main list
@@ -181,23 +187,31 @@
       restoreScrollPosition();
     }
 
-    // --- NEW FUNCTION: Add to Watch Later ---
+    // --- NEW/MODIFIED FUNCTION: Add to Watch Later ---
     function addToWatchLater(itemIndex, itemType) {
         let watchLaterItems = JSON.parse(localStorage.getItem('watchLater')) || [];
+
+        // Determine the correct content array based on itemType
+        const itemContent = itemType === 'series' ? content.series : content.movies;
+        const item = itemContent[itemIndex];
+
+        if (!item) {
+            console.error(`Item not found for type: ${itemType}, index: ${itemIndex}`);
+            alert('Could not add item to Watch Later. Item not found.');
+            return;
+        }
 
         // Create an object to store item details
         const itemToAdd = {
             index: itemIndex,
             type: itemType,
-            // You might want to add more details here for easier display later,
-            // e.g., title, image, description, but for now, index and type are enough to retrieve from 'content'
-            title: content[itemType][itemIndex].title,
-            image: content[itemType][itemIndex].image
+            title: item.title,
+            image: item.image
         };
 
         // Check if the item is already in the watch later list to avoid duplicates
-        const isDuplicate = watchLaterItems.some(item =>
-            item.index === itemToAdd.index && item.type === itemToAdd.type
+        const isDuplicate = watchLaterItems.some(existingItem =>
+            existingItem.index === itemToAdd.index && existingItem.type === itemToAdd.type
         );
 
         if (!isDuplicate) {
@@ -207,6 +221,56 @@
             console.log('Watch Later items:', watchLaterItems);
         } else {
             alert(`${itemToAdd.title} is already in your Watch Later list.`);
+        }
+    }
+    // --- END NEW/MODIFIED FUNCTION ---
+
+    // --- NEW FUNCTION: Show Watch Later List ---
+    function showWatchLaterList() {
+        const container = document.getElementById('watchLaterList');
+        const noItemsMessage = document.getElementById('noWatchLaterItems');
+        container.innerHTML = ''; // Clear previous items
+
+        let watchLaterItems = JSON.parse(localStorage.getItem('watchLater')) || [];
+
+        if (watchLaterItems.length === 0) {
+            noItemsMessage.style.display = 'block'; // Show "No items" message
+        } else {
+            noItemsMessage.style.display = 'none'; // Hide "No items" message
+            watchLaterItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'series-item'; // Use existing styling
+                div.innerHTML = `
+                    <img src="${item.image}" alt="${item.title}" />
+                    <h4>${item.title}</h4>
+                    <button onclick="${item.type === 'series' ? `showSeriesDetails(${item.index})` : `showMovieDetails(${item.index})`}" class="btn">View</button>
+                    <button onclick="removeFromWatchLater(${item.index}, '${item.type}')" class="btn">Remove</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        // Ensure nav and search are visible when in watchLater section
+        document.querySelector('nav').style.display = 'flex';
+        document.querySelectorAll('.search-box').forEach(sb => sb.style.display = 'block');
+    }
+    // --- END NEW FUNCTION ---
+
+    // --- NEW FUNCTION: Remove from Watch Later ---
+    function removeFromWatchLater(itemIndex, itemType) {
+        let watchLaterItems = JSON.parse(localStorage.getItem('watchLater')) || [];
+        const initialLength = watchLaterItems.length;
+
+        // Filter out the item to be removed
+        watchLaterItems = watchLaterItems.filter(item =>
+            !(item.index === itemIndex && item.type === itemType)
+        );
+
+        if (watchLaterItems.length < initialLength) {
+            localStorage.setItem('watchLater', JSON.stringify(watchLaterItems));
+            alert('Item removed from Watch Later.');
+            showWatchLaterList(); // Re-render the list after removal
+        } else {
+            console.warn('Attempted to remove item not found:', { index: itemIndex, type: itemType });
         }
     }
     // --- END NEW FUNCTION ---
@@ -221,6 +285,7 @@
             // First, load all lists (so content exists if details are to be shown)
             showSeriesList();
             showMovieList();
+            // Do NOT call showWatchLaterList here, it will be called by showSection if watchLater was last active
 
             // Then, activate the remembered section
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -244,6 +309,8 @@
                     document.getElementById('seriesDetails').style.display = 'none';
                 } else if (lastActiveSection === 'movies') {
                     document.getElementById('movieDetails').style.display = 'none';
+                } else if (lastActiveSection === 'watchLater') { // ADDED: If resuming to watchLater, show it
+                    showWatchLaterList();
                 }
                 // --- ADDED: Ensure nav/search are visible if resuming into a list view ---
                 document.querySelector('nav').style.display = 'flex';
