@@ -20,7 +20,7 @@ description: " ",
 
         {
           title: "Konosuba (s1)",
-          image: "Images/2.jpeg",
+          image: "Images/Cover4.jpg",
           description: "An intergalactic adventure across unknown planets.",
           episodes: [
             { title: "Episode 1", link: "https://drive.google.com/file/d/110UyhRjYnSOomo3-9Wh30BZonjVHr7Nu/preview" },
@@ -46,7 +46,7 @@ description: " ",
       movies: [
         {
           title: "Your Name(sub)",
-          image:"Images/1.jpeg",
+          image:"Images/Cover3.jpeg",
           description: "A beautiful romantic fantasy that transcends time and space.",
           link: "https://drive.google.com/file/d/10e007gPw7-zykD4XnHU_v_HV3mS7Y72Y/preview"
         }, 
@@ -55,7 +55,7 @@ description: " ",
 
 {
           title: "The Life List",
-          image:"Images/tll.jpeg",
+          image:"Images/Cover1.jpeg",
                     description: " After  her mother's passing Alex is forced to complete a list she compiled when she was 13 only so she could have some of her mother's inherentence ,but on her Journey she finds secrets about herself. ",
        link:"https://drive.google.com/file/d/12tRqoJ9sXycE7RODnlxu11HVR7wcZbtL/preview  "
    
@@ -64,7 +64,7 @@ description: " ",
 
 {
           title: "Power Rangers",
-          image:"Images/pr.jpeg",
+          image:"Images/Cover2.jpeg",
           description: " .",
             link:"https://drive.google.com/file/d/17looZTle9cX9De1f6gN5QUcBhopDoKvx/preview" 
         },
