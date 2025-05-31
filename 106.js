@@ -4,7 +4,7 @@ const content = {
                {
 title: "Bleach:TYBW P2",
 image: "Images/cour2.jpeg",
-description: " ",
+description: "When a new enemy appears, Ichigo Kurosaki jumps back into the battlefield with his Zanpakuto to help those in need. ",
  episodes: [
                    { title: "Episode 1", link:"https://drive.google.com/file/d/10D0xtKf_CPz5ODJAiX2A5wfyCg57NcIg/preview" },
                    { title: "Episode 2",  link:"https://drive.google.com/file/d/1-K6_2qaz1ZCz7u54FSvNX-hPq3qbqmZf/preview" },
@@ -21,7 +21,7 @@ description: " ",
         {
           title: "Konosuba (s1)",
           image: "Images/Cover4.jpg",
-          description: "An intergalactic adventure across unknown planets.",
+          description: "After a traffic accident, Kazuma Sato's disappointingly brief life was supposed to be over, but a goddess gives him a second chance.",
           episodes: [
             { title: "Episode 1", link: "https://drive.google.com/file/d/110UyhRjYnSOomo3-9Wh30BZonjVHr7Nu/preview" },
             { title: "Episode 2", link: "https://drive.google.com/file/d/1128cXGsLQ_wUcjls8hcZbfy-YbeRwChc/preview" },
