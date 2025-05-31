@@ -191,7 +191,13 @@ nav button:hover {
 @media (max-width: 1024px) {
   .series-grid {
     grid-template-columns: repeat(3, 1fr);
+
   }
+
+.p{
+font-size:4rem;
+
+}
 }
 
 
