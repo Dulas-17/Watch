@@ -43,11 +43,18 @@ description: " ",
 
 
 
+
+
+
+
+
+
+
       movies: [
         {
           title: "Your Name(sub)",
           image:"Images/Cover3.jpeg",
-          description: "A beautiful romantic fantasy that transcends time and space.",
+          description: "Two teenagers share a profound, magical connection upon discovering they are swapping bodies. Things manage to become even more complicated when the boy and girl decide to meet in person.",
           link: "https://drive.google.com/file/d/10e007gPw7-zykD4XnHU_v_HV3mS7Y72Y/preview"
         }, 
 
