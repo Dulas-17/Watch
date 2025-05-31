@@ -63,7 +63,7 @@ description: " ",
 {
           title: "The Life List",
           image:"Images/Cover1.jpeg",
-                    description: " After  her mother's passing Alex is forced to complete a list she compiled when she was 13 only so she could have some of her mother's inherentence ,but on her Journey she finds secrets about herself. ",
+                    description: "When her mother sends her on a quest to complete a teenage bucket list, a young woman uncovers family secrets, finds romance and rediscovers herself.",
        link:"https://drive.google.com/file/d/12tRqoJ9sXycE7RODnlxu11HVR7wcZbtL/preview  "
    
         },
@@ -72,7 +72,7 @@ description: " ",
 {
           title: "Power Rangers",
           image:"Images/Cover2.jpeg",
-          description: " .",
+          description: "A group of high-school students acquire superpowers after they discover an alien spaceship. They soon learn about its origin and use their abilities to fight against evil extraterrestrials.",
             link:"https://drive.google.com/file/d/17looZTle9cX9De1f6gN5QUcBhopDoKvx/preview" 
         },
 
