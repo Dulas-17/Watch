@@ -11,11 +11,12 @@ const content = {
         { title: "Episode 3", link: "https://drive.google.com/file/d/1-TQNzstys6szmuu-5iPmnxmZ6-oznFc2/preview" },
       ]
     },
+
     {
       title: "Konosuba (s1)",
       image: "Images/Cover4.jpg",
       description: "An intergalactic adventure across unknown planets.",
-      genres: ["Comedy", "Fantasy", "Isekai", "Anime"], // Added genres
+      genres: ["Comedy", "Fantasy", "Anime", "Isekai"], // Added genres
       episodes: [
         { title: "Episode 1", link: "https://drive.google.com/file/d/110UyhRjYnSOomo3-9Wh30BZonjVHr7Nu/preview" },
         { title: "Episode 2", link: "https://drive.google.com/file/d/1128cXGsLQ_wUcjls8hcZbfy-YbeRwChc/preview" },
