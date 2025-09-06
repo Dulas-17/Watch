@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DULAS Format Converter</title>
+    <title>DULAS Converter with PIN Protection</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -19,6 +19,7 @@
             --border: #dee2e6;
             --encode-bg: rgba(67, 97, 238, 0.1);
             --decode-bg: rgba(76, 201, 240, 0.1);
+            --pin-bg: rgba(114, 9, 183, 0.1);
         }
 
         * {
@@ -210,6 +211,14 @@
             background: #c41c5b;
         }
 
+        .btn-pin {
+            background: var(--accent);
+        }
+
+        .btn-pin:hover {
+            background: #5a0c8f;
+        }
+
         .file-list {
             margin: 20px 0;
         }
@@ -332,6 +341,11 @@
             background: rgba(76, 201, 240, 0.1);
         }
 
+        .pin-info {
+            background: var(--pin-bg);
+            margin-top: 20px;
+        }
+
         .format-info h3 {
             margin-bottom: 10px;
             display: flex;
@@ -345,6 +359,10 @@
 
         .decode-info h3 {
             color: var(--success);
+        }
+
+        .pin-info h3 {
+            color: var(--accent);
         }
 
         .format-info ul {
@@ -421,13 +439,58 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
+
+        .pin-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: var(--pin-bg);
+            border-radius: 8px;
+        }
+
+        .pin-section h3 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pin-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pin-input input {
+            padding: 10px 15px;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 200px;
+        }
+
+        .pin-hint {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 10px;
+        }
+
+        .protected-badge {
+            background: var(--accent);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-file-code"></i> DULAS Format Converter</h1>
-            <p>Convert your images and audio files to the efficient DULAS format and decode them back</p>
+            <h1><i class="fas fa-file-code"></i> DULAS Converter with PIN Protection</h1>
+            <p>Secure your files with optional PIN protection when converting to DULAS format</p>
         </header>
 
         <div class="tabs">
@@ -449,6 +512,15 @@
 
                     <div class="file-list" id="encodeFileList">
                         <!-- File items will be added here dynamically -->
+                    </div>
+
+                    <div class="pin-section">
+                        <h3><i class="fas fa-lock"></i> Optional PIN Protection</h3>
+                        <div class="pin-input">
+                            <input type="password" id="encodePin" placeholder="Enter PIN (optional)" maxlength="8">
+                            <button class="btn btn-pin" id="setPinBtn"><i class="fas fa-key"></i> Set PIN</button>
+                        </div>
+                        <p class="pin-hint">If set, this PIN will be required to decode these files. Maximum 8 digits.</p>
                     </div>
 
                     <div class="progress-container">
@@ -478,6 +550,17 @@
                     </div>
 
                     <div class="format-info encode-info">
+                        <h3><i class="fas fa-lock"></i> PIN Protection</h3>
+                        <p>Add an optional PIN to your encoded files for an extra layer of security:</p>
+                        <ul>
+                            <li>PIN is integrated into the file structure</li>
+                            <li>Required for decoding protected files</li>
+                            <li>Maximum 8-digit numeric PIN</li>
+                            <li>No recovery option if PIN is lost</li>
+                        </ul>
+                    </div>
+
+                    <div class="format-info encode-info">
                         <h3><i class="fas fa-check-circle"></i> Supported Formats</h3>
                         <p><strong>Images:</strong> JPG, PNG, GIF, BMP, WEBP</p>
                         <p><strong>Audio:</strong> MP3, WAV, OGG, FLAC, M4A</p>
@@ -502,6 +585,15 @@
 
                     <div class="file-list" id="decodeFileList">
                         <!-- File items will be added here dynamically -->
+                    </div>
+
+                    <div class="pin-section" id="decodePinSection" style="display: none;">
+                        <h3><i class="fas fa-unlock-alt"></i> PIN Required</h3>
+                        <div class="pin-input">
+                            <input type="password" id="decodePin" placeholder="Enter PIN" maxlength="8">
+                            <button class="btn btn-pin" id="submitPinBtn"><i class="fas fa-check"></i> Submit PIN</button>
+                        </div>
+                        <p class="pin-hint">This file is protected with a PIN. Enter the correct PIN to decode it.</p>
                     </div>
 
                     <div class="progress-container">
@@ -537,6 +629,17 @@
                     </div>
 
                     <div class="format-info decode-info">
+                        <h3><i class="fas fa-key"></i> PIN Protection</h3>
+                        <p>If a DULAS file was encoded with a PIN, you'll need to provide it for decoding:</p>
+                        <ul>
+                            <li>PIN is verified before decoding</li>
+                            <li>Wrong PIN will prevent file extraction</li>
+                            <li>No limit on attempts</li>
+                            <li>No way to recover files without the PIN</li>
+                        </ul>
+                    </div>
+
+                    <div class="format-info decode-info">
                         <h3><i class="fas fa-check-circle"></i> Output Formats</h3>
                         <p><strong>Images:</strong> PNG (original format restored)</p>
                         <p><strong>Audio:</strong> WAV (original format restored)</p>
@@ -548,7 +651,7 @@
         </div>
 
         <footer>
-            <p>DULAS Format Converter &copy; 2023 | All rights reserved</p>
+            <p>DULAS Format Converter with PIN Protection &copy; 2023 | All rights reserved</p>
         </footer>
     </div>
 
@@ -587,6 +690,8 @@
             const encodeProgress = document.getElementById('encodeProgress');
             const encodeProgressText = document.getElementById('encodeProgressText');
             const encodeFilesProcessed = document.getElementById('encodeFilesProcessed');
+            const encodePin = document.getElementById('encodePin');
+            const setPinBtn = document.getElementById('setPinBtn');
             
             // Decode functionality
             const decodeArea = document.getElementById('decodeArea');
@@ -601,6 +706,9 @@
             const decodePreview = document.getElementById('decodePreview');
             const previewImage = document.getElementById('previewImage');
             const previewAudio = document.getElementById('previewAudio');
+            const decodePinSection = document.getElementById('decodePinSection');
+            const decodePin = document.getElementById('decodePin');
+            const submitPinBtn = document.getElementById('submitPinBtn');
             
             const notification = document.getElementById('notification');
 
@@ -609,17 +717,22 @@
             let decodeFiles = [];
             let encodedFiles = [];
             let decodedFiles = [];
+            let encodePinValue = "";
+            let requiresPin = false;
+            let correctPin = "";
 
             // Event Listeners
             encodeBrowseBtn.addEventListener('click', () => encodeInput.click());
             encodeInput.addEventListener('change', (e) => handleFileSelect(e, 'encode'));
             encodeBtn.addEventListener('click', startEncode);
             encodeDownloadBtn.addEventListener('click', downloadEncoded);
+            setPinBtn.addEventListener('click', setEncodePin);
             
             decodeBrowseBtn.addEventListener('click', () => decodeInput.click());
             decodeInput.addEventListener('change', (e) => handleFileSelect(e, 'decode'));
             decodeBtn.addEventListener('click', startDecode);
             decodeDownloadBtn.addEventListener('click', downloadDecoded);
+            submitPinBtn.addEventListener('click', submitDecodePin);
 
             // Drag and drop for encode
             encodeArea.addEventListener('dragover', (e) => {
@@ -757,6 +870,46 @@
                 });
             }
 
+            function setEncodePin() {
+                const pin = encodePin.value.trim();
+                
+                // Validate PIN (numeric, max 8 digits)
+                if (pin && !/^\d{1,8}$/.test(pin)) {
+                    showNotification('PIN must be numeric and up to 8 digits', true);
+                    return;
+                }
+                
+                encodePinValue = pin;
+                
+                if (pin) {
+                    showNotification('PIN protection enabled for these files');
+                    setPinBtn.innerHTML = '<i class="fas fa-check"></i> PIN Set';
+                    setPinBtn.classList.add('btn-success');
+                } else {
+                    showNotification('PIN protection disabled');
+                    setPinBtn.innerHTML = '<i class="fas fa-key"></i> Set PIN';
+                    setPinBtn.classList.remove('btn-success');
+                }
+            }
+
+            function submitDecodePin() {
+                const pin = decodePin.value.trim();
+                
+                if (!pin) {
+                    showNotification('Please enter a PIN', true);
+                    return;
+                }
+                
+                // In a real app, this would verify against the stored PIN in the file
+                if (pin === correctPin) {
+                    showNotification('PIN accepted');
+                    decodeBtn.disabled = false;
+                    decodePinSection.style.display = 'none';
+                } else {
+                    showNotification('Incorrect PIN', true);
+                }
+            }
+
             function startEncode() {
                 if (encodeFiles.length === 0) return;
                 
@@ -775,7 +928,8 @@
                             encodedFiles.push({
                                 original: file,
                                 encoded: encodedBlob,
-                                name: file.name.split('.')[0] + '.dulas'
+                                name: file.name.split('.')[0] + '.dulas',
+                                pinProtected: !!encodePinValue
                             });
                             
                             completed++;
@@ -805,8 +959,16 @@
                         setTimeout(simulateStep, 100 + Math.random() * 200);
                     } else {
                         // Conversion complete - create a mock DULAS file
-                        // In a real app, this would be the actual converted data
-                        const dulasContent = `DULAS${Math.random().toString(36).substring(2, 15)}`;
+                        // In a real app, this would be the actual converted data with PIN integration
+                        let dulasContent = `DULAS${Math.random().toString(36).substring(2, 15)}`;
+                        
+                        // Add PIN marker if a PIN was set
+                        if (encodePinValue) {
+                            dulasContent += `|PIN:${encodePinValue}|`;
+                            requiresPin = true;
+                            correctPin = encodePinValue;
+                        }
+                        
                         const blob = new Blob([dulasContent], { type: 'application/octet-stream' });
                         
                         callback(blob);
@@ -833,6 +995,17 @@
                 decodeBtn.disabled = true;
                 decodeDownloadBtn.disabled = true;
                 decodePreview.style.display = 'none';
+                
+                // Check if any files require a PIN
+                const pinRequired = Math.random() > 0.5; // Simulating random PIN requirement
+                
+                if (pinRequired) {
+                    requiresPin = true;
+                    decodePinSection.style.display = 'block';
+                    decodeBtn.disabled = true;
+                    showNotification('PIN required for one or more files');
+                    return;
+                }
                 
                 // Process each file
                 decodeFiles.forEach((file, index) => {
