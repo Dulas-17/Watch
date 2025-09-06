@@ -1,60 +1,194 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>BayWatch</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="0834813844.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DULAS v4 — Decoder</title>
+<style>
+  :root{
+    --bg:#071024; --card:#0f1722; --muted:#9fb0c3; --accent:#ffb86b; --ok:#22c55e; --bad:#ff6b6b;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  body{margin:0;background:linear-gradient(180deg,#041022 0%,#061424 100%);color:#eaf6ff}
+  .wrap{max-width:980px;margin:28px auto;padding:18px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  h1{margin:0;color:var(--accent)}
+  .card{background:var(--card);padding:14px;border-radius:12px}
+  input[type=file]{display:block}
+  .files{margin-top:12px;display:grid;gap:10px}
+  .file-card{display:flex;gap:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);align-items:center}
+  .thumb{width:120px;height:80px;background:#0003;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .info{flex:1}
+  .meta{font-size:13px;color:var(--muted)}
+  a.download{display:inline-block;margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--accent);color:#051022;text-decoration:none;font-weight:700}
+  .bad{color:var(--bad)}
+  .ok{color:var(--ok)}
+  .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
+</style>
 </head>
 <body>
-
-  <nav>
-    <button onclick="showSection('home')">Home</button>
-    <button onclick="showSection('movies')">Movies</button>
-    <button onclick="showSection('series')">Series</button>
-  </nav>
-
-  <div id="home" class="section active">
-    <h1>Baywatch</h1>
-    <p>NB:The page is still under development</p>
-    <p>we currently only have 2 uploads </p>
-  </div>
-
-  <div id="series" class="section">
-    <h2>Shows</h2>
-    <div class="search-box">
-      <input type="text" id="seriesSearch" placeholder="Search for a series..." onkeyup="searchContent('series')">
+  <div class="wrap">
+    <header><h1>DULAS v4 — Decoder</h1></header>
+    <div class="card">
+      <div><input id="dulasFile" type="file" accept=".dulas,application/octet-stream" /></div>
+      <div class="controls">
+        <label class="meta">If bundle is encrypted, you will be prompted for a password during decode.</label>
+      </div>
+      <div id="status" style="margin-top:10px;color:var(--muted)">No bundle loaded</div>
+      <div class="files" id="filesContainer"></div>
     </div>
-    <div class="genre-buttons" id="seriesGenreButtons"></div> <div id="seriesList" class="series-grid"></div>
-    <div id="seriesDetails" class="series-details" style="display: none;"></div>
   </div>
 
+<script>
+const MAGIC = "DULAS4";
 
-  <div id="movies" class="section">
-    <h2>Movies</h2>
-    <div class="search-box">
-      <input type="text" id="movieSearch" placeholder="Search for a movie..." onkeyup="searchContent('movies')">
-    </div>
-    <div class="genre-buttons" id="movieGenreButtons"></div> <div id="movieList" class="series-grid"></div>
-    <div id="movieDetails" class="series-details" style="display: none;"></div>
-  </div>
+document.getElementById('dulasFile').addEventListener('change', async (e) => {
+  const f = e.target.files?.[0];
+  if(!f) return;
+  const bytes = new Uint8Array(await f.arrayBuffer());
+  try{
+    await decodeBundle(bytes);
+  }catch(err){
+    document.getElementById('status').textContent = 'Failed to decode: ' + err.message;
+  }
+});
 
+function u32From(array, offset){ return array[offset] | (array[offset+1]<<8) | (array[offset+2]<<16) | (array[offset+3]<<24); }
+function base64ToArrayBuffer(b64){
+  const bin = atob(b64); const len = bin.length; const u = new Uint8Array(len);
+  for(let i=0;i<len;i++) u[i]=bin.charCodeAt(i); return u.buffer;
+}
+async function deriveKeyFromPassword(password, saltBytes){
+  const pwKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256'},
+    pwKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt','decrypt']
+  );
+}
+async function aesGcmDecrypt(key, ciphertext, iv){ return crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ciphertext); }
+async function decompressIfPossible(u8){
+  if(!window.DecompressionStream) return u8;
+  try{
+    const ds = new DecompressionStream('deflate');
+    const writer = ds.writable.getWriter();
+    writer.write(u8); writer.close();
+    const arr = await new Response(ds.readable).arrayBuffer();
+    return new Uint8Array(arr);
+  }catch(e){ return u8; }
+}
+function hexFromBuffer(buf){
+  const b = new Uint8Array(buf); return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function sha256(bytes){ const h = await crypto.subtle.digest('SHA-256', bytes); return hexFromBuffer(h); }
 
+async function decodeBundle(u8){
+  const view = u8;
+  // minimal header validation
+  const magic = new TextDecoder().decode(view.slice(0,6));
+  if(magic !== MAGIC) throw new Error('Not a DULAS v4 bundle (magic mismatch)');
+  let offset = 6;
+  const version = view[offset++]; if(version !== 0x04) throw new Error('Unsupported version '+version);
+  const flags = view[offset++]; // bit1 indicates encryption used
+  const saltLen = view[offset++]; let salt = null;
+  if(saltLen>0){ salt = view.slice(offset, offset+saltLen); offset += saltLen; }
+  const fileCount = view[offset++];
 
-  <div id="videoFullScreen">
-    <button onclick="closeFullScreen()">🔙</button>
-    <iframe src="" allowfullscreen></iframe>
-  </div>
+  document.getElementById('status').textContent = `Bundle v${version} • ${fileCount} file(s) • ${flags & 0x02 ? 'encrypted' : 'not encrypted'}`;
 
+  // prepare master key if encrypted
+  let masterKey = null;
+  if((flags & 0x02) !== 0){
+    const pwd = prompt('This bundle is encrypted. Enter password to attempt decryption:','');
+    if(pwd === null) throw new Error('Password required to decode encrypted bundle.');
+    masterKey = await deriveKeyFromPassword(pwd, salt);
+  }
 
-<script src="8611.js"></script>
-<script src="106.js"></script>
+  const container = document.getElementById('filesContainer'); container.innerHTML = '';
+
+  for(let i=0;i<fileCount;i++){
+    if(offset + 4 > view.length) throw new Error('Truncated metadata length');
+    const metaLen = u32From(view, offset); offset += 4;
+    const metaBytes = view.slice(offset, offset + metaLen); offset += metaLen;
+    const metaStr = new TextDecoder().decode(metaBytes);
+    const meta = JSON.parse(metaStr);
+    if(offset + 4 > view.length) throw new Error('Truncated data length');
+    const dataLen = u32From(view, offset); offset += 4;
+    const dataBytes = view.slice(offset, offset + dataLen); offset += dataLen;
+
+    // if encrypted: meta.iv available as base64; decrypt then decompress if needed
+    let payload = dataBytes;
+    if(meta.encrypted){
+      if(!meta.iv) throw new Error('Missing IV for encrypted file');
+      const ivArr = new Uint8Array(atob(meta.iv).split('').map(c=>c.charCodeAt(0)));
+      try{
+        const pt = await aesGcmDecrypt(masterKey, payload.buffer, ivArr);
+        payload = new Uint8Array(pt);
+      }catch(e){
+        // wrong password or tampered
+        const card = renderFileCard(meta, null, 'decryption failed', true);
+        container.appendChild(card);
+        continue;
+      }
+    }
+    // decompress if flagged
+    if(meta.compressed){
+      try{ payload = await decompressIfPossible(payload); }catch(e){ /* ignore and leave payload as is */ }
+    }
+
+    // verify sha256
+    const foundSha = await sha256(payload.buffer);
+    const ok = (foundSha === meta.sha256);
+
+    // render preview and download
+    const blob = new Blob([payload], { type: meta.mime });
+    const url = URL.createObjectURL(blob);
+    const card = renderFileCard(meta, {url, blob, ok}, ok ? 'ready' : 'integrity fail', !ok);
+    container.appendChild(card);
+  }
+}
+
+/* Renders a UI card for each file, supporting preview and download */
+function renderFileCard(meta, payloadInfo, statusText, bad){
+  const wrapper = document.createElement('div'); wrapper.className='file-card';
+  const thumb = document.createElement('div'); thumb.className='thumb';
+  if(meta.thumbnail){
+    thumb.innerHTML = `<img src="${meta.thumbnail}" style="width:100%;height:100%;object-fit:cover"/>`;
+  } else {
+    thumb.innerHTML = `<div style="color:var(--muted)">${meta.mime.split('/')[0]||'file'}</div>`;
+  }
+  const info = document.createElement('div'); info.className='info';
+  const title = document.createElement('div'); title.textContent = meta.name; title.style.fontWeight='700';
+  const md = document.createElement('div'); md.className='meta';
+  md.innerHTML = `${meta.mime} • ${meta.origSize} bytes • ${meta.width?meta.width+'×'+meta.height+ ' • ':''}${meta.duration?Math.round(meta.duration)+'s • ':''} created: ${new Date(meta.created).toLocaleString()}`;
+  const status = document.createElement('div'); status.style.marginTop='8px';
+  if(payloadInfo && payloadInfo.ok) status.innerHTML = `<span class="ok">✔ integrity OK</span>`;
+  else status.innerHTML = `<span class="bad">✖ integrity mismatch</span>`;
+
+  info.appendChild(title); info.appendChild(md); info.appendChild(status);
+
+  const actions = document.createElement('div');
+  if(payloadInfo && payloadInfo.blob){
+    // preview based on mime
+    if(meta.mime.startsWith('image/')){
+      const img = document.createElement('img'); img.src = payloadInfo.url; img.style.maxWidth='240px'; img.style.borderRadius='6px'; img.style.marginTop='8px';
+      info.appendChild(img);
+    } else if(meta.mime.startsWith('audio/')){
+      const a = document.createElement('audio'); a.controls=true; a.src = payloadInfo.url; a.style.width='100%'; a.style.marginTop='8px'; info.appendChild(a);
+    } else if(meta.mime.startsWith('video/')){
+      const v = document.createElement('video'); v.controls=true; v.src = payloadInfo.url; v.style.width='100%'; v.style.borderRadius='6px'; v.style.marginTop='8px'; info.appendChild(v);
+    }
+    // download
+    const dl = document.createElement('a'); dl.href = payloadInfo.url; dl.download = meta.name; dl.textContent = 'Download'; dl.className='download';
+    actions.appendChild(dl);
+  } else {
+    const span = document.createElement('div'); span.textContent = 'No preview available'; actions.appendChild(span);
+  }
+  wrapper.appendChild(thumb); wrapper.appendChild(info); wrapper.appendChild(actions);
+  return wrapper;
+}
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
