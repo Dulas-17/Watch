@@ -227,6 +227,7 @@ function handleFileSelection(files) {
   filesToEncode.forEach(file => {
     const fileItem = document.createElement('div');
     fileItem.className = 'file-item';
+    fileItem.dataset.filename = file.name;
     const fileInfo = document.createElement('div');
     fileInfo.className = 'file-info';
     fileInfo.innerHTML = `<strong>${file.name}</strong><br><span class="file-status">${formatBytes(file.size)} - ready to process</span>`;
@@ -251,16 +252,12 @@ encBtn.addEventListener('click', async () => {
   
   const password = encPwd.value;
   const isEncrypted = password.length > 0;
-  const bundleFiles = [];
-  
-  let totalSize = 0;
-  for (const file of filesToEncode) {
-    totalSize += file.size;
-  }
-  encodeStat.textContent = `Processing ${filesToEncode.length} files (total size: ${formatBytes(totalSize)})...`;
-  encBtn.disabled = true;
   
   const fileDataPromises = filesToEncode.map(async file => {
+    const fileItem = fileList.querySelector(`[data-filename="${file.name}"]`);
+    const statusSpan = fileItem.querySelector('.file-status');
+    statusSpan.textContent = 'Processing...';
+    
     try {
       if (file.type.startsWith('image/')) {
         const bmp = await loadImageToBitmap(file);
@@ -271,14 +268,24 @@ encBtn.addEventListener('click', async () => {
         ctx.drawImage(bmp, 0, 0);
         const imgData = ctx.getImageData(0, 0, bmp.width, bmp.height);
         const payload = encodeImagePayload(imgData);
+        statusSpan.textContent = 'Image encoded successfully!';
+        statusSpan.classList.add('ok');
         return { name: file.name, type: 'image', payload, width: bmp.width, height: bmp.height };
       } else if (file.type.startsWith('audio/')) {
         const audioBuffer = await file.arrayBuffer();
         const payload = new Uint8Array(audioBuffer);
+        statusSpan.textContent = 'Audio encoded successfully!';
+        statusSpan.classList.add('ok');
         return { name: file.name, type: 'audio', payload };
+      } else {
+        statusSpan.textContent = 'Unsupported file type.';
+        statusSpan.classList.add('bad');
+        return null;
       }
     } catch (err) {
-      console.error(`Failed to process ${file.name}:`, err);
+      statusSpan.textContent = `Processing failed: ${err.message}`;
+      statusSpan.classList.add('bad');
+      console.error(err);
       return null;
     }
   });
@@ -291,7 +298,6 @@ encBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Build the bundle payload
   let payloadBytes = [];
   const toc = [];
   let currentOffset = 0;
@@ -316,8 +322,8 @@ encBtn.addEventListener('click', async () => {
   
   let salt = new Uint8Array();
   let iv = new Uint8Array();
-  let ciphertext = new Uint8Array();
-  let encryptedToc = new Uint8Array();
+  let ciphertext = payload;
+  let tocData = tocJson;
 
   if(isEncrypted) {
     encodeStat.textContent = 'Encrypting bundle...';
@@ -327,9 +333,8 @@ encBtn.addEventListener('click', async () => {
     ciphertext = new Uint8Array(encResult.ciphertext);
     iv = encResult.iv;
     
-    // Encrypt TOC separately
     const encTocResult = await aesGcmEncrypt(key, tocJson);
-    encryptedToc = new Uint8Array(encTocResult.ciphertext);
+    tocData = new Uint8Array(encTocResult.ciphertext);
   }
 
   const out = [];
@@ -340,10 +345,10 @@ encBtn.addEventListener('click', async () => {
   out.push(...salt);
   out.push(iv.length);
   out.push(...iv);
-  writeU32LE(out, tocJson.length);
-  out.push(...tocJson);
-  writeU32LE(out, payload.length);
-  out.push(...payload);
+  writeU32LE(out, tocData.length);
+  out.push(...tocData);
+  writeU32LE(out, ciphertext.length);
+  out.push(...ciphertext);
 
   const dulas = new Uint8Array(out);
   encodedBundle = dulas;
@@ -375,7 +380,7 @@ async function decodeDULAS(bytes) {
   for(let i=0;i<5;i++){ if(u8[off+i] !== MAGIC[i]) throw new Error("Not a DULAS file (bad magic)."); }
   off += 5;
   const version = u8[off++];
-  if(version > VERSION) throw new Error(`Unsupported DULAS version ${version}.`);
+  if(version !== VERSION) throw new Error(`Unsupported DULAS version ${version}.`);
   const flags = u8[off++];
   const isEncrypted = (flags & 1) === 1;
   let tocJson = null;
@@ -394,12 +399,11 @@ async function decodeDULAS(bytes) {
 
       const tocLen = readU32LE(view, off); off += 4;
       const encToc = u8.slice(off, off + tocLen); off += tocLen;
-      const tocIv = iv.slice(0, 12); // Use the same IV for TOC
       const payloadLen = readU32LE(view, off); off += 4;
       const encPayload = u8.slice(off, off + payloadLen);
 
       try {
-        const decryptedToc = await aesGcmDecrypt(key, encToc, tocIv);
+        const decryptedToc = await aesGcmDecrypt(key, encToc, iv);
         tocJson = new TextDecoder().decode(decryptedToc);
         const decryptedPayload = await aesGcmDecrypt(key, encPayload, iv);
         payload = new Uint8Array(decryptedPayload);
@@ -427,20 +431,27 @@ async function decodeDULAS(bytes) {
     if (fileInfo.type === 'image') {
       const imageDataArray = decodeImagePayload(fileData);
       const imageData = new ImageData(imageDataArray, fileInfo.width, fileInfo.height);
-      const blob = new Blob([imageDataArray], { type: 'image/png' });
-      const url = URL.createObjectURL(blob);
-      const img = document.createElement('img');
-      img.src = url;
-      img.className = 'preview';
-      item.appendChild(img);
-      const downloadBtn = document.createElement('a');
-      downloadBtn.href = url;
-      downloadBtn.download = fileInfo.name;
-      downloadBtn.textContent = 'Download Image';
-      downloadBtn.className = 'download-btn button';
-      item.appendChild(downloadBtn);
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = fileInfo.width;
+      tempCanvas.height = fileInfo.height;
+      const ctx = tempCanvas.getContext('2d');
+      ctx.putImageData(imageData, 0, 0);
+      const blobPromise = new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+      blobPromise.then(blob => {
+        const url = URL.createObjectURL(blob);
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'preview';
+        item.appendChild(img);
+        const downloadBtn = document.createElement('a');
+        downloadBtn.href = url;
+        downloadBtn.download = fileInfo.name;
+        downloadBtn.textContent = 'Download Image';
+        downloadBtn.className = 'download-btn button';
+        item.appendChild(downloadBtn);
+      });
     } else if (fileInfo.type === 'audio') {
-      const blob = new Blob([fileData], { type: 'audio/wav' });
+      const blob = new Blob([fileData], { type: 'audio/mp3' }); // Changed to mp3 for better support
       const url = URL.createObjectURL(blob);
       const audio = document.createElement('audio');
       audio.src = url;
