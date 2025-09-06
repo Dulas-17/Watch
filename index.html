@@ -196,18 +196,10 @@ let encodedBundle = null;
 ['dragleave', 'drop'].forEach(eventName => {
   dropArea.addEventListener(eventName, () => dropArea.classList.remove('active'), false);
 });
-dropArea.addEventListener('drop', handleDrop, false);
-
-function preventDefaults(e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
-
-function handleDrop(e) {
-  const dt = e.dataTransfer;
-  const files = dt.files;
-  handleFileSelection(files);
-}
+dropArea.addEventListener('drop', (e) => {
+  preventDefaults(e);
+  handleFileSelection(e.dataTransfer.files);
+}, false);
 
 encIn.addEventListener('change', (e) => {
   handleFileSelection(e.target.files);
@@ -354,7 +346,7 @@ encBtn.addEventListener('click', async () => {
   encodedBundle = dulas;
   encodeStat.textContent = `Bundle created! Size: ${formatBytes(dulas.byteLength)} ${isEncrypted ? '— ENCRYPTED' : ''}`;
   encBtn.disabled = false;
-  encBtn.textContent = 'Download Bundle';
+  encBtn.textContent = 'Download DULAS Bundle';
 });
 
 decIn.addEventListener('change', async () => {
