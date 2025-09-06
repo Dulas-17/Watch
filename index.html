@@ -1,1160 +1,258 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DULAS Converter with PIN Protection</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #4361ee;
-            --secondary: #3a0ca3;
-            --accent: #7209b7;
-            --success: #4cc9f0;
-            --warning: #f72585;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-            --card-bg: #ffffff;
-            --border: #dee2e6;
-            --encode-bg: rgba(67, 97, 238, 0.1);
-            --decode-bg: rgba(76, 201, 240, 0.1);
-            --pin-bg: rgba(114, 9, 183, 0.1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: var(--dark);
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-        }
-
-        header h1 {
-            font-size: 2.8rem;
-            color: var(--secondary);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        header p {
-            color: var(--gray);
-            font-size: 1.2rem;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .tabs {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-            gap: 10px;
-        }
-
-        .tab-btn {
-            padding: 15px 30px;
-            background: var(--light);
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            margin-bottom: 25px;
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card h2 {
-            color: var(--secondary);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .encode-card {
-            border-top: 5px solid var(--primary);
-        }
-
-        .decode-card {
-            border-top: 5px solid var(--success);
-        }
-
-        .upload-area {
-            border: 2px dashed var(--border);
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .encode-area {
-            background: var(--encode-bg);
-        }
-
-        .decode-area {
-            background: var(--decode-bg);
-        }
-
-        .upload-area.active {
-            border-color: var(--primary);
-        }
-
-        .upload-area i {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
-        }
-
-        .encode-area i {
-            color: var(--primary);
-        }
-
-        .decode-area i {
-            color: var(--success);
-        }
-
-        .upload-area p {
-            color: var(--gray);
-            margin-bottom: 15px;
-        }
-
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            background: var(--secondary);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn:disabled {
-            background: var(--gray);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .btn-success {
-            background: var(--success);
-        }
-
-        .btn-success:hover {
-            background: #3aa5c4;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-        }
-
-        .btn-warning:hover {
-            background: #c41c5b;
-        }
-
-        .btn-pin {
-            background: var(--accent);
-        }
-
-        .btn-pin:hover {
-            background: #5a0c8f;
-        }
-
-        .file-list {
-            margin: 20px 0;
-        }
-
-        .file-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .encode-file {
-            background: rgba(67, 97, 238, 0.1);
-        }
-
-        .decode-file {
-            background: rgba(76, 201, 240, 0.1);
-        }
-
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .file-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-
-        .encode-icon {
-            background: var(--primary);
-        }
-
-        .decode-icon {
-            background: var(--success);
-        }
-
-        .file-name {
-            font-weight: 500;
-        }
-
-        .file-size {
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-
-        .file-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            color: var(--gray);
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: color 0.3s ease;
-        }
-
-        .action-btn:hover {
-            color: var(--primary);
-        }
-
-        .progress-container {
-            margin-top: 15px;
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 5px;
-        }
-
-        .progress {
-            height: 100%;
-            border-radius: 4px;
-            width: 0%;
-            transition: width 0.4s ease;
-        }
-
-        .encode-progress {
-            background: var(--primary);
-        }
-
-        .decode-progress {
-            background: var(--success);
-        }
-
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            color: var(--gray);
-        }
-
-        .format-info {
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
-        .encode-info {
-            background: rgba(67, 97, 238, 0.1);
-        }
-
-        .decode-info {
-            background: rgba(76, 201, 240, 0.1);
-        }
-
-        .pin-info {
-            background: var(--pin-bg);
-            margin-top: 20px;
-        }
-
-        .format-info h3 {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .encode-info h3 {
-            color: var(--primary);
-        }
-
-        .decode-info h3 {
-            color: var(--success);
-        }
-
-        .pin-info h3 {
-            color: var(--accent);
-        }
-
-        .format-info ul {
-            padding-left: 20px;
-        }
-
-        .format-info li {
-            margin-bottom: 5px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-        }
-
-        @media (min-width: 992px) {
-            .grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transform: translateX(100%);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .notification.success {
-            background: var(--success);
-        }
-
-        .notification.error {
-            background: var(--warning);
-        }
-
-        .preview-container {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .preview-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--gray);
-        }
-
-        .preview-content {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .pin-section {
-            margin: 20px 0;
-            padding: 15px;
-            background: var(--pin-bg);
-            border-radius: 8px;
-        }
-
-        .pin-section h3 {
-            color: var(--accent);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .pin-input {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .pin-input input {
-            padding: 10px 15px;
-            border: 2px solid var(--accent);
-            border-radius: 8px;
-            font-size: 1rem;
-            width: 200px;
-        }
-
-        .pin-hint {
-            font-size: 0.9rem;
-            color: var(--gray);
-            margin-top: 10px;
-        }
-
-        .protected-badge {
-            background: var(--accent);
-            color: white;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            margin-left: 10px;
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DULAS v2 — Multi-File Image & Audio Encoder/Decoder</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --card: #121821;
+    --muted: #9fb0c3;
+    --ink: #e7eef7;
+    --accent: #5ad;
+    --accent-hover: #48c;
+  }
+  body {
+    margin: 0;
+    font-family: system-ui, Segoe UI, Roboto, Inter, Arial;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #1e2a38;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    letter-spacing: .02em;
+  }
+  main {
+    padding: 1rem;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width:900px){ main{ grid-template-columns:1fr 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid #1e2a38;
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 6px 30px rgba(0,0,0,.25);
+  }
+  .card h2 { margin:.25rem 0 1rem; font-size:1.05rem; color:var(--muted); }
+  .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin-bottom:.75rem; }
+  input[type=file], input[type=password], select { color: var(--ink); background: var(--card); border: 1px solid #1e2a38; border-radius:8px; padding:.5rem; flex:1; }
+  button { background: var(--accent); color: #05131f; border: 0; padding:.65rem .9rem; border-radius:12px; font-weight:600; cursor:pointer; }
+  button.secondary { background: #1f2a38; color: var(--ink); }
+  button:hover { background: var(--accent-hover); }
+  .stat { font-size:.9rem; color: var(--muted); }
+  canvas { max-width:100%; background:#0002; border-radius:12px; margin-top:.5rem; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  audio { width: 100%; margin-top: .5rem; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-file-code"></i> DULAS Converter with PIN Protection</h1>
-            <p>Secure your files with optional PIN protection when converting to DULAS format</p>
-        </header>
-
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="encode"><i class="fas fa-shield-alt"></i> Encode to DULAS</button>
-            <button class="tab-btn" data-tab="decode"><i class="fas fa-lock-open"></i> Decode from DULAS</button>
-        </div>
-
-        <div class="tab-content active" id="encode-tab">
-            <div class="grid">
-                <div class="card encode-card">
-                    <h2><i class="fas fa-upload"></i> Upload Media Files</h2>
-                    <div class="upload-area encode-area" id="encodeArea">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Drag & drop your files here or click to browse</p>
-                        <p class="file-size">Maximum 6 files (images or audio)</p>
-                        <input type="file" id="encodeInput" multiple accept="image/*,audio/*" style="display: none;">
-                        <button class="btn" id="encodeBrowseBtn"><i class="fas fa-folder-open"></i> Browse Files</button>
-                    </div>
-
-                    <div class="file-list" id="encodeFileList">
-                        <!-- File items will be added here dynamically -->
-                    </div>
-
-                    <div class="pin-section">
-                        <h3><i class="fas fa-lock"></i> Optional PIN Protection</h3>
-                        <div class="pin-input">
-                            <input type="password" id="encodePin" placeholder="Enter PIN (optional)" maxlength="8">
-                            <button class="btn btn-pin" id="setPinBtn"><i class="fas fa-key"></i> Set PIN</button>
-                        </div>
-                        <p class="pin-hint">If set, this PIN will be required to decode these files. Maximum 8 digits.</p>
-                    </div>
-
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress encode-progress" id="encodeProgress"></div>
-                        </div>
-                        <div class="progress-info">
-                            <span id="encodeProgressText">0%</span>
-                            <span id="encodeFilesProcessed">0/0 files processed</span>
-                        </div>
-                    </div>
-
-                    <button class="btn" id="encodeBtn" disabled><i class="fas fa-cog"></i> Convert to DULAS</button>
-                </div>
-
-                <div class="card">
-                    <h2><i class="fas fa-info-circle"></i> Encoding Details</h2>
-                    <div class="format-info encode-info">
-                        <h3><i class="fas fa-shield-alt"></i> About DULAS Format</h3>
-                        <p>DULAS is a highly efficient, lossless media format designed for optimal storage and transmission.</p>
-                        <ul>
-                            <li>Up to 40% smaller file size compared to original formats</li>
-                            <li>Preserves all original quality and metadata</li>
-                            <li>Fast encoding and decoding algorithms</li>
-                            <li>Universal compatibility across platforms</li>
-                        </ul>
-                    </div>
-
-                    <div class="format-info encode-info">
-                        <h3><i class="fas fa-lock"></i> PIN Protection</h3>
-                        <p>Add an optional PIN to your encoded files for an extra layer of security:</p>
-                        <ul>
-                            <li>PIN is integrated into the file structure</li>
-                            <li>Required for decoding protected files</li>
-                            <li>Maximum 8-digit numeric PIN</li>
-                            <li>No recovery option if PIN is lost</li>
-                        </ul>
-                    </div>
-
-                    <div class="format-info encode-info">
-                        <h3><i class="fas fa-check-circle"></i> Supported Formats</h3>
-                        <p><strong>Images:</strong> JPG, PNG, GIF, BMP, WEBP</p>
-                        <p><strong>Audio:</strong> MP3, WAV, OGG, FLAC, M4A</p>
-                    </div>
-
-                    <button class="btn btn-success" id="encodeDownloadBtn" disabled><i class="fas fa-download"></i> Download All</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-content" id="decode-tab">
-            <div class="grid">
-                <div class="card decode-card">
-                    <h2><i class="fas fa-download"></i> Upload DULAS Files</h2>
-                    <div class="upload-area decode-area" id="decodeArea">
-                        <i class="fas fa-file-import"></i>
-                        <p>Drag & drop your DULAS files here or click to browse</p>
-                        <p class="file-size">Maximum 6 files with .dulas extension</p>
-                        <input type="file" id="decodeInput" multiple accept=".dulas" style="display: none;">
-                        <button class="btn btn-success" id="decodeBrowseBtn"><i class="fas fa-folder-open"></i> Browse DULAS Files</button>
-                    </div>
-
-                    <div class="file-list" id="decodeFileList">
-                        <!-- File items will be added here dynamically -->
-                    </div>
-
-                    <div class="pin-section" id="decodePinSection" style="display: none;">
-                        <h3><i class="fas fa-unlock-alt"></i> PIN Required</h3>
-                        <div class="pin-input">
-                            <input type="password" id="decodePin" placeholder="Enter PIN" maxlength="8">
-                            <button class="btn btn-pin" id="submitPinBtn"><i class="fas fa-check"></i> Submit PIN</button>
-                        </div>
-                        <p class="pin-hint">This file is protected with a PIN. Enter the correct PIN to decode it.</p>
-                    </div>
-
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress decode-progress" id="decodeProgress"></div>
-                        </div>
-                        <div class="progress-info">
-                            <span id="decodeProgressText">0%</span>
-                            <span id="decodeFilesProcessed">0/0 files processed</span>
-                        </div>
-                    </div>
-
-                    <button class="btn btn-success" id="decodeBtn" disabled><i class="fas fa-cog"></i> Decode DULAS Files</button>
-
-                    <div class="preview-container" id="decodePreview" style="display: none;">
-                        <div class="preview-title">Preview:</div>
-                        <img id="previewImage" class="preview-content" style="display: none;">
-                        <audio id="previewAudio" class="preview-content" controls style="display: none;"></audio>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2><i class="fas fa-info-circle"></i> Decoding Details</h2>
-                    <div class="format-info decode-info">
-                        <h3><i class="fas fa-lock-open"></i> About DULAS Decoding</h3>
-                        <p>DULAS files can be decoded back to their original format with full fidelity and no quality loss.</p>
-                        <ul>
-                            <li>Complete restoration of original file structure</li>
-                            <li>Maintains all metadata and quality</li>
-                            <li>Fast decoding process</li>
-                            <li>Automatic format detection</li>
-                        </ul>
-                    </div>
-
-                    <div class="format-info decode-info">
-                        <h3><i class="fas fa-key"></i> PIN Protection</h3>
-                        <p>If a DULAS file was encoded with a PIN, you'll need to provide it for decoding:</p>
-                        <ul>
-                            <li>PIN is verified before decoding</li>
-                            <li>Wrong PIN will prevent file extraction</li>
-                            <li>No limit on attempts</li>
-                            <li>No way to recover files without the PIN</li>
-                        </ul>
-                    </div>
-
-                    <div class="format-info decode-info">
-                        <h3><i class="fas fa-check-circle"></i> Output Formats</h3>
-                        <p><strong>Images:</strong> PNG (original format restored)</p>
-                        <p><strong>Audio:</strong> WAV (original format restored)</p>
-                    </div>
-
-                    <button class="btn btn-warning" id="decodeDownloadBtn" disabled><i class="fas fa-download"></i> Download All Decoded</button>
-                </div>
-            </div>
-        </div>
-
-        <footer>
-            <p>DULAS Format Converter with PIN Protection &copy; 2023 | All rights reserved</p>
-        </footer>
+<header><h1>DULAS v2 — Multi-File Image & Audio Encoder/Decoder</h1></header>
+<main>
+  <!-- MODE SELECTION -->
+  <section class="card" style="grid-column:1/-1">
+    <h2>Select File Type</h2>
+    <div class="row">
+      <label for="modeSelect">File type:</label>
+      <select id="modeSelect">
+        <option value="image">Image</option>
+        <option value="audio">Audio</option>
+      </select>
     </div>
+    <p class="stat">Choose whether you're working with images or audio before encoding/decoding.</p>
+  </section>
 
-    <div class="notification" id="notification">
-        <i class="fas fa-check-circle"></i>
-        <span>File converted successfully!</span>
+  <!-- ENCODE -->
+  <section class="card">
+    <h2>Encode Files ➜ .dulas</h2>
+    <div class="row">
+      <input type="file" id="encodeInput" multiple />
+      <input type="password" id="encodePassword" placeholder="Optional password" />
+      <button id="encodeBtn" disabled>Encode & Download .dulas</button>
     </div>
+    <p class="stat" id="encodeStat">No files loaded.</p>
+    <div id="encodePreview"></div>
+  </section>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Tab functionality
-            const tabBtns = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const tabId = btn.getAttribute('data-tab');
-                    
-                    // Update buttons
-                    tabBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    
-                    // Update contents
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    document.getElementById(`${tabId}-tab`).classList.add('active');
-                });
-            });
+  <!-- DECODE -->
+  <section class="card">
+    <h2>Decode .dulas ➜ Preview / Export</h2>
+    <div class="row">
+      <input type="file" id="decodeInput" multiple />
+      <input type="password" id="decodePassword" placeholder="Password if required" />
+      <button id="decodeBtn" class="secondary" disabled>Decode & Preview</button>
+    </div>
+    <p class="stat" id="decodeStat">No .dulas loaded.</p>
+    <div id="decodePreview"></div>
+  </section>
+</main>
 
-            // Encode functionality
-            const encodeArea = document.getElementById('encodeArea');
-            const encodeInput = document.getElementById('encodeInput');
-            const encodeBrowseBtn = document.getElementById('encodeBrowseBtn');
-            const encodeFileList = document.getElementById('encodeFileList');
-            const encodeBtn = document.getElementById('encodeBtn');
-            const encodeDownloadBtn = document.getElementById('encodeDownloadBtn');
-            const encodeProgress = document.getElementById('encodeProgress');
-            const encodeProgressText = document.getElementById('encodeProgressText');
-            const encodeFilesProcessed = document.getElementById('encodeFilesProcessed');
-            const encodePin = document.getElementById('encodePin');
-            const setPinBtn = document.getElementById('setPinBtn');
-            
-            // Decode functionality
-            const decodeArea = document.getElementById('decodeArea');
-            const decodeInput = document.getElementById('decodeInput');
-            const decodeBrowseBtn = document.getElementById('decodeBrowseBtn');
-            const decodeFileList = document.getElementById('decodeFileList');
-            const decodeBtn = document.getElementById('decodeBtn');
-            const decodeDownloadBtn = document.getElementById('decodeDownloadBtn');
-            const decodeProgress = document.getElementById('decodeProgress');
-            const decodeProgressText = document.getElementById('decodeProgressText');
-            const decodeFilesProcessed = document.getElementById('decodeFilesProcessed');
-            const decodePreview = document.getElementById('decodePreview');
-            const previewImage = document.getElementById('previewImage');
-            const previewAudio = document.getElementById('previewAudio');
-            const decodePinSection = document.getElementById('decodePinSection');
-            const decodePin = document.getElementById('decodePin');
-            const submitPinBtn = document.getElementById('submitPinBtn');
-            
-            const notification = document.getElementById('notification');
+<script>
+// ---------- Constants ----------
+const MAGIC = [0x44,0x55,0x4C,0x41,0x53]; // "DULAS"
+const VERSION = 2;
+const FILE_TYPE = { IMAGE:1, AUDIO:2 };
 
-            // State
-            let encodeFiles = [];
-            let decodeFiles = [];
-            let encodedFiles = [];
-            let decodedFiles = [];
-            let encodePinValue = "";
-            let requiresPin = false;
-            let correctPin = "";
+// ---------- Helpers ----------
+function writeU16LE(arr, n){ arr.push(n & 255, (n>>>8) & 255); }
+function writeU32LE(arr, n){ arr.push(n & 255, (n>>>8)&255, (n>>>16)&255, (n>>>24)&255); }
+function readU16LE(view, o){ return view.getUint16(o, true); }
+function readU32LE(view, o){ return view.getUint32(o, true); }
+function stringToBytes(str){ return Array.from(new TextEncoder().encode(str)); }
+function bytesToString(u8){ return new TextDecoder().decode(u8); }
 
-            // Event Listeners
-            encodeBrowseBtn.addEventListener('click', () => encodeInput.click());
-            encodeInput.addEventListener('change', (e) => handleFileSelect(e, 'encode'));
-            encodeBtn.addEventListener('click', startEncode);
-            encodeDownloadBtn.addEventListener('click', downloadEncoded);
-            setPinBtn.addEventListener('click', setEncodePin);
-            
-            decodeBrowseBtn.addEventListener('click', () => decodeInput.click());
-            decodeInput.addEventListener('change', (e) => handleFileSelect(e, 'decode'));
-            decodeBtn.addEventListener('click', startDecode);
-            decodeDownloadBtn.addEventListener('click', downloadDecoded);
-            submitPinBtn.addEventListener('click', submitDecodePin);
+// ---------- SIMPLE PASSWORD HASH ----------
+async function hashPassword(pw){
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(pw));
+  return new Uint8Array(buf);
+}
 
-            // Drag and drop for encode
-            encodeArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                encodeArea.classList.add('active');
-            });
+// ---------- ENCODER ----------
+async function encodeFiles(files, fileType, password){
+  const out = [];
+  for(const file of files){
+    const fileBytes = new Uint8Array(await file.arrayBuffer());
+    // Header per file
+    out.push(...MAGIC);
+    out.push(VERSION);
+    out.push(fileType===FILE_TYPE.IMAGE? FILE_TYPE.IMAGE: FILE_TYPE.AUDIO);
+    if(password){
+      out.push(1); // password required
+      const pwHash = await hashPassword(password);
+      out.push(...pwHash); // 32 bytes
+    }else{
+      out.push(0); // no password
+    }
+    writeU32LE(out, fileBytes.length);
+    out.push(...fileBytes);
+  }
+  return new Uint8Array(out);
+}
 
-            encodeArea.addEventListener('dragleave', () => {
-                encodeArea.classList.remove('active');
-            });
+// ---------- DECODER ----------
+async function decodeFiles(bytes, expectedType, password){
+  const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const view = new DataView(u8.buffer);
+  const files = [];
+  let offset = 0;
+  while(offset < u8.length){
+    // Check magic
+    for(let i=0;i<5;i++){ if(u8[offset+i]!==MAGIC[i]) throw new Error("Invalid DULAS file"); }
+    offset +=5;
+    const version = u8[offset++]; if(version!==VERSION) throw new Error("Unsupported version");
+    const typeByte = u8[offset++];
+    if(typeByte!==expectedType) throw new Error("File type mismatch for decoding");
+    const pwFlag = u8[offset++];
+    if(pwFlag===1){
+      const storedHash = u8.slice(offset, offset+32); offset+=32;
+      if(!password) throw new Error("Password required");
+      const pwHash = await hashPassword(password);
+      if(!pwHash.every((v,i)=>v===storedHash[i])) throw new Error("Incorrect password");
+    }
+    const length = readU32LE(view, offset); offset+=4;
+    const fileData = u8.slice(offset, offset+length); offset+=length;
+    files.push(fileData);
+  }
+  return files;
+}
 
-            encodeArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                encodeArea.classList.remove('active');
-                
-                if (e.dataTransfer.files.length > 0) {
-                    processFiles(e.dataTransfer.files, 'encode');
-                }
-            });
+// ---------- UI ----------
+const modeSelect = document.getElementById('modeSelect');
+const encIn = document.getElementById('encodeInput');
+const encBtn = document.getElementById('encodeBtn');
+const encStat = document.getElementById('encodeStat');
+const encPass = document.getElementById('encodePassword');
+const encPreview = document.getElementById('encodePreview');
 
-            // Drag and drop for decode
-            decodeArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                decodeArea.classList.add('active');
-            });
+const decIn = document.getElementById('decodeInput');
+const decBtn = document.getElementById('decodeBtn');
+const decStat = document.getElementById('decodeStat');
+const decPass = document.getElementById('decodePassword');
+const decPreview = document.getElementById('decodePreview');
 
-            decodeArea.addEventListener('dragleave', () => {
-                decodeArea.classList.remove('active');
-            });
+// ---------- Encode File Selection ----------
+encIn.addEventListener('change', () => {
+  const files = Array.from(encIn.files || []);
+  const type = modeSelect.value;
+  const allowed = type==='image'? ['image/png','image/jpeg','image/webp'] : ['audio/mpeg','audio/wav','audio/ogg'];
+  const invalid = files.some(f=>!allowed.includes(f.type));
+  if(invalid){ encStat.textContent="File type mismatch"; encBtn.disabled=true; return; }
+  encBtn.disabled = files.length===0;
+  encStat.textContent = `Ready to encode ${files.length} ${type}(s)`;
+  // Preview images
+  encPreview.innerHTML = '';
+  if(type==='image'){
+    files.forEach(f=>{
+      const img = document.createElement('img'); img.style.maxWidth='100px'; img.style.margin='5px';
+      img.src = URL.createObjectURL(f);
+      encPreview.appendChild(img);
+    });
+  }else{
+    files.forEach(f=>{
+      const a = document.createElement('div');
+      a.textContent = f.name; encPreview.appendChild(a);
+    });
+  }
+});
 
-            decodeArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                decodeArea.classList.remove('active');
-                
-                if (e.dataTransfer.files.length > 0) {
-                    processFiles(e.dataTransfer.files, 'decode');
-                }
-            });
+// ---------- Encode Button ----------
+encBtn.addEventListener('click', async () => {
+  const files = Array.from(encIn.files || []);
+  const type = modeSelect.value==='image'? FILE_TYPE.IMAGE: FILE_TYPE.AUDIO;
+  const password = encPass.value || null;
+  const dulas = await encodeFiles(files, type, password);
+  const blob = new Blob([dulas], {type:'application/octet-stream'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = `dulas-${new Date().toISOString().replace(/[:.]/g,'-')}.dulas`;
+  document.body.appendChild(a); a.click(); a.remove();
+  encStat.textContent = `Encoded ${files.length} file(s) successfully!`;
+});
 
-            // Functions
-            function handleFileSelect(e, mode) {
-                if (e.target.files.length > 0) {
-                    processFiles(e.target.files, mode);
-                }
-            }
+// ---------- Decode File Selection ----------
+decIn.addEventListener('change', () => {
+  decBtn.disabled = (decIn.files.length===0);
+  decStat.textContent = `Ready to decode ${decIn.files.length} file(s)`;
+  decPreview.innerHTML = '';
+});
 
-            function processFiles(files, mode) {
-                const fileArray = mode === 'encode' ? encodeFiles : decodeFiles;
-                const fileList = mode === 'encode' ? encodeFileList : decodeFileList;
-                const maxFiles = 6;
-                
-                // Check if we're exceeding the limit
-                if (fileArray.length + files.length > maxFiles) {
-                    showNotification(`Maximum ${maxFiles} files allowed`, true);
-                    return;
-                }
-
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    
-                    if (mode === 'encode') {
-                        // Check if file is image or audio
-                        if (!file.type.startsWith('image/') && !file.type.startsWith('audio/')) {
-                            showNotification('Please select only image or audio files', true);
-                            continue;
-                        }
-                    } else {
-                        // Check if file has .dulas extension
-                        if (!file.name.toLowerCase().endsWith('.dulas')) {
-                            showNotification('Please select only .dulas files', true);
-                            continue;
-                        }
-                    }
-
-                    // Add to selected files if not already there
-                    if (!fileArray.some(f => f.name === file.name && f.size === file.size)) {
-                        fileArray.push(file);
-                        addFileToUI(file, mode);
-                    }
-                }
-
-                // Update UI
-                if (mode === 'encode') {
-                    encodeBtn.disabled = encodeFiles.length === 0;
-                    updateProgress(0, 0, 'encode');
-                } else {
-                    decodeBtn.disabled = decodeFiles.length === 0;
-                    updateProgress(0, 0, 'decode');
-                }
-            }
-
-            function addFileToUI(file, mode) {
-                const fileList = mode === 'encode' ? encodeFileList : decodeFileList;
-                const fileArray = mode === 'encode' ? encodeFiles : decodeFiles;
-                
-                const fileItem = document.createElement('div');
-                fileItem.className = `file-item ${mode}-file`;
-                
-                const extension = file.name.split('.').pop().toUpperCase();
-                const fileType = mode === 'encode' 
-                    ? (file.type.startsWith('image/') ? 'Image' : 'Audio')
-                    : 'DULAS';
-                const fileSize = formatFileSize(file.size);
-                
-                fileItem.innerHTML = `
-                    <div class="file-info">
-                        <div class="file-icon ${mode}-icon">${mode === 'decode' ? 'DUL' : extension}</div>
-                        <div>
-                            <div class="file-name">${file.name}</div>
-                            <div class="file-size">${fileType} · ${fileSize}</div>
-                        </div>
-                    </div>
-                    <div class="file-actions">
-                        <button class="action-btn remove-btn">❌</button>
-                    </div>
-                `;
-                
-                fileList.appendChild(fileItem);
-                
-                // Add event listener to remove button
-                const removeBtn = fileItem.querySelector('.remove-btn');
-                removeBtn.addEventListener('click', () => {
-                    const index = fileArray.findIndex(f => f === file);
-                    if (index !== -1) {
-                        fileArray.splice(index, 1);
-                    }
-                    fileItem.remove();
-                    
-                    if (mode === 'encode') {
-                        encodeBtn.disabled = encodeFiles.length === 0;
-                    } else {
-                        decodeBtn.disabled = decodeFiles.length === 0;
-                        decodePreview.style.display = 'none';
-                    }
-                });
-            }
-
-            function setEncodePin() {
-                const pin = encodePin.value.trim();
-                
-                // Validate PIN (numeric, max 8 digits)
-                if (pin && !/^\d{1,8}$/.test(pin)) {
-                    showNotification('PIN must be numeric and up to 8 digits', true);
-                    return;
-                }
-                
-                encodePinValue = pin;
-                
-                if (pin) {
-                    showNotification('PIN protection enabled for these files');
-                    setPinBtn.innerHTML = '<i class="fas fa-check"></i> PIN Set';
-                    setPinBtn.classList.add('btn-success');
-                } else {
-                    showNotification('PIN protection disabled');
-                    setPinBtn.innerHTML = '<i class="fas fa-key"></i> Set PIN';
-                    setPinBtn.classList.remove('btn-success');
-                }
-            }
-
-            function submitDecodePin() {
-                const pin = decodePin.value.trim();
-                
-                if (!pin) {
-                    showNotification('Please enter a PIN', true);
-                    return;
-                }
-                
-                // In a real app, this would verify against the stored PIN in the file
-                if (pin === correctPin) {
-                    showNotification('PIN accepted');
-                    decodeBtn.disabled = false;
-                    decodePinSection.style.display = 'none';
-                } else {
-                    showNotification('Incorrect PIN', true);
-                }
-            }
-
-            function startEncode() {
-                if (encodeFiles.length === 0) return;
-                
-                encodedFiles = [];
-                let completed = 0;
-                
-                // Reset and show progress
-                updateProgress(0, encodeFiles.length, 'encode');
-                encodeBtn.disabled = true;
-                encodeDownloadBtn.disabled = true;
-                
-                // Process each file
-                encodeFiles.forEach((file, index) => {
-                    setTimeout(() => {
-                        encodeFile(file, (encodedBlob) => {
-                            encodedFiles.push({
-                                original: file,
-                                encoded: encodedBlob,
-                                name: file.name.split('.')[0] + '.dulas',
-                                pinProtected: !!encodePinValue
-                            });
-                            
-                            completed++;
-                            updateProgress(completed, encodeFiles.length, 'encode');
-                            
-                            if (completed === encodeFiles.length) {
-                                encodeComplete();
-                            }
-                        });
-                    }, index * 300); // Stagger conversions
-                });
-            }
-
-            function encodeFile(file, callback) {
-                // Simulate conversion process
-                const totalSteps = 10;
-                let currentStep = 0;
-                
-                // In a real application, this would be the actual conversion algorithm
-                const simulateStep = () => {
-                    if (currentStep < totalSteps) {
-                        currentStep++;
-                        const progress = (currentStep / totalSteps) * 100;
-                        
-                        // Update individual file progress if needed
-                        
-                        setTimeout(simulateStep, 100 + Math.random() * 200);
-                    } else {
-                        // Conversion complete - create a mock DULAS file
-                        // In a real app, this would be the actual converted data with PIN integration
-                        let dulasContent = `DULAS${Math.random().toString(36).substring(2, 15)}`;
-                        
-                        // Add PIN marker if a PIN was set
-                        if (encodePinValue) {
-                            dulasContent += `|PIN:${encodePinValue}|`;
-                            requiresPin = true;
-                            correctPin = encodePinValue;
-                        }
-                        
-                        const blob = new Blob([dulasContent], { type: 'application/octet-stream' });
-                        
-                        callback(blob);
-                    }
-                };
-                
-                simulateStep();
-            }
-
-            function encodeComplete() {
-                showNotification('All files encoded successfully!');
-                encodeDownloadBtn.disabled = false;
-                encodeBtn.disabled = false;
-            }
-
-            function startDecode() {
-                if (decodeFiles.length === 0) return;
-                
-                decodedFiles = [];
-                let completed = 0;
-                
-                // Reset and show progress
-                updateProgress(0, decodeFiles.length, 'decode');
-                decodeBtn.disabled = true;
-                decodeDownloadBtn.disabled = true;
-                decodePreview.style.display = 'none';
-                
-                // Check if any files require a PIN
-                const pinRequired = Math.random() > 0.5; // Simulating random PIN requirement
-                
-                if (pinRequired) {
-                    requiresPin = true;
-                    decodePinSection.style.display = 'block';
-                    decodeBtn.disabled = true;
-                    showNotification('PIN required for one or more files');
-                    return;
-                }
-                
-                // Process each file
-                decodeFiles.forEach((file, index) => {
-                    setTimeout(() => {
-                        decodeFile(file, (decodedBlob, type) => {
-                            decodedFiles.push({
-                                original: file,
-                                decoded: decodedBlob,
-                                type: type,
-                                name: file.name.replace('.dulas', type === 'image' ? '.png' : '.wav')
-                            });
-                            
-                            completed++;
-                            updateProgress(completed, decodeFiles.length, 'decode');
-                            
-                            if (completed === decodeFiles.length) {
-                                decodeComplete();
-                            }
-                            
-                            // Show preview for the first file
-                            if (completed === 1) {
-                                showPreview(decodedBlob, type);
-                            }
-                        });
-                    }, index * 300); // Stagger conversions
-                });
-            }
-
-            function decodeFile(file, callback) {
-                // Simulate decoding process
-                const totalSteps = 8;
-                let currentStep = 0;
-                
-                // In a real application, this would be the actual decoding algorithm
-                const simulateStep = () => {
-                    if (currentStep < totalSteps) {
-                        currentStep++;
-                        const progress = (currentStep / totalSteps) * 100;
-                        
-                        setTimeout(simulateStep, 100 + Math.random() * 200);
-                    } else {
-                        // Decoding complete - determine file type and create mock content
-                        // In a real app, this would be the actual decoded data
-                        const isImage = Math.random() > 0.5;
-                        const type = isImage ? 'image' : 'audio';
-                        
-                        // Create mock decoded content
-                        let content = '';
-                        if (isImage) {
-                            // Create a simple SVG as a mock image
-                            content = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
-                                <rect width="100" height="100" fill="#${Math.floor(Math.random()*16777215).toString(16)}"/>
-                                <text x="50" y="50" font-family="Arial" font-size="10" fill="white" text-anchor="middle">${file.name}</text>
-                            </svg>`;
-                        } else {
-                            // Create a mock audio file
-                            content = `Audio${Math.random().toString(36).substring(2, 15)}`;
-                        }
-                        
-                        const blob = new Blob([content], { type: isImage ? 'image/svg+xml' : 'audio/wav' });
-                        callback(blob, type);
-                    }
-                };
-                
-                simulateStep();
-            }
-
-            function decodeComplete() {
-                showNotification('All files decoded successfully!');
-                decodeDownloadBtn.disabled = false;
-                decodeBtn.disabled = false;
-            }
-
-            function showPreview(blob, type) {
-                decodePreview.style.display = 'block';
-                previewImage.style.display = 'none';
-                previewAudio.style.display = 'none';
-                
-                const url = URL.createObjectURL(blob);
-                
-                if (type === 'image') {
-                    previewImage.src = url;
-                    previewImage.style.display = 'block';
-                } else {
-                    previewAudio.src = url;
-                    previewAudio.style.display = 'block';
-                }
-            }
-
-            function downloadEncoded() {
-                if (encodedFiles.length === 0) return;
-                
-                encodedFiles.forEach(file => {
-                    const url = URL.createObjectURL(file.encoded);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = file.name;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                });
-            }
-
-            function downloadDecoded() {
-                if (decodedFiles.length === 0) return;
-                
-                decodedFiles.forEach(file => {
-                    const url = URL.createObjectURL(file.decoded);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = file.name;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                });
-            }
-
-            function updateProgress(completed, total, mode) {
-                const progressBar = mode === 'encode' ? encodeProgress : decodeProgress;
-                const progressText = mode === 'encode' ? encodeProgressText : decodeProgressText;
-                const filesProcessed = mode === 'encode' ? encodeFilesProcessed : decodeFilesProcessed;
-                
-                const percent = total > 0 ? (completed / total) * 100 : 0;
-                progressBar.style.width = `${percent}%`;
-                progressText.textContent = `${Math.round(percent)}%`;
-                filesProcessed.textContent = `${completed}/${total} files processed`;
-            }
-
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            }
-
-            function showNotification(message, isError = false) {
-                const icon = isError ? 'fa-exclamation-circle' : 'fa-check-circle';
-                notification.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
-                notification.className = `notification ${isError ? 'error' : 'success'}`;
-                notification.classList.add('show');
-                
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
-            }
-        });
-    </script>
+// ---------- Decode Button ----------
+decBtn.addEventListener('click', async () => {
+  const type = modeSelect.value==='image'? FILE_TYPE.IMAGE: FILE_TYPE.AUDIO;
+  const password = decPass.value || null;
+  const allBytes = [];
+  for(const file of decIn.files){
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    allBytes.push(...bytes);
+  }
+  try{
+    const files = await decodeFiles(new Uint8Array(allBytes), type, password);
+    decPreview.innerHTML = '';
+    if(type===FILE_TYPE.IMAGE){
+      files.forEach((buf,i)=>{
+        const blob = new Blob([buf]); const url = URL.createObjectURL(blob);
+        const img = document.createElement('img'); img.src=url; img.style.maxWidth='150px'; img.style.margin='5px';
+        decPreview.appendChild(img);
+      });
+    }else{
+      files.forEach((buf,i)=>{
+        const blob = new Blob([buf]); const url = URL.createObjectURL(blob);
+        const audio = document.createElement('audio'); audio.controls=true; audio.src=url; decPreview.appendChild(audio);
+      });
+    }
+    decStat.textContent = `Decoded ${files.length} file(s) successfully!`;
+  }catch(e){
+    decStat.textContent = `Decoding failed: ${e.message}`;
+  }
+});
+</script>
 </body>
 </html>
