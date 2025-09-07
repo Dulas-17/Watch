@@ -2,178 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DULAS Encoder</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-      color: #333;
+      background: linear-gradient(120deg, #4e54c8, #8f94fb);
+      color: white;
       text-align: center;
-    }
-    header {
-      background: #222;
-      color: #fff;
-      padding: 1rem;
-      font-size: 1.2rem;
+      padding: 40px;
     }
     .container {
-      max-width: 600px;
-      margin: 2rem auto;
-      padding: 1rem;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.4);
+      padding: 20px;
+      border-radius: 15px;
+      display: inline-block;
+      width: 400px;
     }
-    .section {
-      margin: 1.5rem 0;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: bold;
-    }
-    input, button {
-      padding: 0.6rem;
-      font-size: 1rem;
-      margin: 0.3rem 0;
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-    }
-    #fileList {
-      margin-top: 1rem;
-      text-align: left;
-      font-size: 0.9rem;
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
+    input, select, button {
+      margin: 8px;
+      padding: 10px;
       border-radius: 8px;
-      padding: 0.5rem;
-      background: #fafafa;
+      border: none;
+      width: 80%;
     }
-    .file-item {
-      margin: 0.3rem 0;
-      padding: 0.3rem;
-      border-bottom: 1px solid #eee;
+    button {
+      background: #00c6ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
     }
-    .download-link {
-      display: block;
-      margin: 0.5rem 0;
-      color: #007bff;
-      text-decoration: none;
-      word-break: break-all;
-    }
-    .download-link:hover {
-      text-decoration: underline;
-    }
-    @media (max-width: 600px) {
-      .container {
-        margin: 1rem;
-        padding: 1rem;
-      }
-    }
+    button:hover { background: #0072ff; }
   </style>
 </head>
 <body>
-  <header>DULAS Encoder</header>
   <div class="container">
-    <div class="section">
-      <label>Choose Mode:</label>
-      <input type="radio" name="mode" value="image"> Image
-      <input type="radio" name="mode" value="audio"> Audio
-    </div>
-
-    <div class="section">
-      <label>Select Files (max 10):</label>
-      <input type="file" id="fileInput" multiple>
-      <div id="fileList"></div>
-    </div>
-
-    <div class="section">
-      <label>Password (optional):</label>
-      <input type="password" id="password">
-    </div>
-
-    <div class="section">
-      <button onclick="encodeFiles()">Encode & Download</button>
-      <div id="downloadLinks"></div>
-    </div>
+    <h1>🔒 DULAS Encoder</h1>
+    <p>Choose what to encode:</p>
+    <select id="fileType">
+      <option value="image">Images</option>
+      <option value="audio">Audio</option>
+    </select>
+    <br>
+    <input type="file" id="fileInput" multiple>
+    <br>
+    <input type="password" id="password" placeholder="Optional password">
+    <br>
+    <button onclick="encodeFiles()">Encode to .dls</button>
+    <div id="output"></div>
   </div>
 
-<script>
-function encodeFiles() {
-  const files = document.getElementById("fileInput").files;
-  const password = document.getElementById("password").value;
-  const mode = document.querySelector("input[name='mode']:checked")?.value;
-
-  if (!mode) return alert("Please select Image or Audio mode.");
-  if (files.length === 0) return alert("Please select files.");
-  if (files.length > 10) return alert("You can select up to 10 files.");
-
-  const downloadLinks = document.getElementById("downloadLinks");
-  downloadLinks.innerHTML = "";
-
-  Array.from(files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      let data = new Uint8Array(reader.result);
-      if (password) {
-        const passBytes = new TextEncoder().encode(password);
-        for (let i = 0; i < data.length; i++) {
-          data[i] ^= passBytes[i % passBytes.length];
-        }
+  <script>
+    function xorEncryptDecrypt(data, password) {
+      let result = "";
+      for (let i = 0; i < data.length; i++) {
+        result += String.fromCharCode(
+          data.charCodeAt(i) ^ password.charCodeAt(i % password.length)
+        );
       }
-      const header = JSON.stringify({mode, password: !!password});
-      const blob = new Blob([header + "\n" + new TextDecoder().decode(data)], {type:"application/octet-stream"});
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = file.name.split(".")[0] + ".dls";
-      link.className = "download-link";
-      link.textContent = "Download " + link.download;
-      downloadLinks.appendChild(link);
-    };
-    reader.readAsArrayBuffer(file);
-  });
-}
+      return result;
+    }
 
-// Update file list
-document.getElementById("fileInput").addEventListener("change", e => {
-  const list = document.getElementById("fileList");
-  list.innerHTML = "";
-  Array.from(e.target.files).forEach(f => {
-    const div = document.createElement("div");
-    div.className = "file-item";
-    div.textContent = f.name;
-    list.appendChild(div);
-  });
-});
+    function encodeFiles() {
+      const fileType = document.getElementById("fileType").value;
+      const files = document.getElementById("fileInput").files;
+      const password = document.getElementById("password").value;
+      const output = document.getElementById("output");
+      output.innerHTML = "";
 
-/* 🔹 Save + Restore Scroll & State */
-function saveState() {
-  const state = {
-    scrollY: window.scrollY,
-    mode: document.querySelector("input[name='mode']:checked")?.value || "",
-    passwordValue: document.getElementById("password").value
-  };
-  localStorage.setItem("dulas_encode", JSON.stringify(state));
-}
-function restoreState() {
-  const saved = localStorage.getItem("dulas_encode");
-  if (!saved) return;
-  const state = JSON.parse(saved);
-  if (state.mode) {
-    const radio = document.querySelector(`input[name='mode'][value='${state.mode}']`);
-    if (radio) radio.checked = true;
-  }
-  document.getElementById("password").value = state.passwordValue || "";
-  window.scrollTo(0, state.scrollY || 0);
-}
-window.addEventListener("beforeunload", saveState);
-window.addEventListener("scroll", saveState);
-window.addEventListener("load", restoreState);
-</script>
+      if (files.length === 0) {
+        alert("Please select at least one file!");
+        return;
+      }
+      if (files.length > 10) {
+        alert("You can only select up to 10 files!");
+        return;
+      }
+
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          let base64 = reader.result;
+          let finalContent = base64;
+
+          if (password) {
+            finalContent = btoa(xorEncryptDecrypt(base64, password));
+          }
+
+          const dlsData = {
+            dulasVersion: "1.0",
+            dulasType: fileType,
+            fileName: file.name,
+            fileSize: file.size,
+            createdAt: new Date().toISOString(),
+            passwordProtected: !!password,
+            content: finalContent
+          };
+
+          const blob = new Blob([JSON.stringify(dlsData)], { type: "application/dulas" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = file.name.split(".")[0] + ".dls";
+          link.textContent = `⬇ Download ${link.download}`;
+          output.appendChild(link);
+          output.appendChild(document.createElement("br"));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
 </body>
 </html>
