@@ -1,258 +1,114 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>DULAS v2 — Multi-File Image & Audio Encoder/Decoder</title>
-<style>
-  :root {
-    --bg: #0b0f14;
-    --card: #121821;
-    --muted: #9fb0c3;
-    --ink: #e7eef7;
-    --accent: #5ad;
-    --accent-hover: #48c;
-  }
-  body {
-    margin: 0;
-    font-family: system-ui, Segoe UI, Roboto, Inter, Arial;
-    background: var(--bg);
-    color: var(--ink);
-  }
-  header {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid #1e2a38;
-  }
-  header h1 {
-    margin: 0;
-    font-size: 1.25rem;
-    letter-spacing: .02em;
-  }
-  main {
-    padding: 1rem;
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: 1fr;
-  }
-  @media (min-width:900px){ main{ grid-template-columns:1fr 1fr; } }
-  .card {
-    background: var(--card);
-    border: 1px solid #1e2a38;
-    border-radius: 16px;
-    padding: 1rem;
-    box-shadow: 0 6px 30px rgba(0,0,0,.25);
-  }
-  .card h2 { margin:.25rem 0 1rem; font-size:1.05rem; color:var(--muted); }
-  .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin-bottom:.75rem; }
-  input[type=file], input[type=password], select { color: var(--ink); background: var(--card); border: 1px solid #1e2a38; border-radius:8px; padding:.5rem; flex:1; }
-  button { background: var(--accent); color: #05131f; border: 0; padding:.65rem .9rem; border-radius:12px; font-weight:600; cursor:pointer; }
-  button.secondary { background: #1f2a38; color: var(--ink); }
-  button:hover { background: var(--accent-hover); }
-  .stat { font-size:.9rem; color: var(--muted); }
-  canvas { max-width:100%; background:#0002; border-radius:12px; margin-top:.5rem; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
-  audio { width: 100%; margin-top: .5rem; }
-</style>
+  <meta charset="UTF-8">
+  <title>DULAS Encoder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(120deg, #4e54c8, #8f94fb);
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+    .container {
+      background: rgba(0,0,0,0.4);
+      padding: 20px;
+      border-radius: 15px;
+      display: inline-block;
+      width: 400px;
+    }
+    input, select, button {
+      margin: 8px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      width: 80%;
+    }
+    button {
+      background: #00c6ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #0072ff; }
+  </style>
 </head>
 <body>
-<header><h1>DULAS v2 — Multi-File Image & Audio Encoder/Decoder</h1></header>
-<main>
-  <!-- MODE SELECTION -->
-  <section class="card" style="grid-column:1/-1">
-    <h2>Select File Type</h2>
-    <div class="row">
-      <label for="modeSelect">File type:</label>
-      <select id="modeSelect">
-        <option value="image">Image</option>
-        <option value="audio">Audio</option>
-      </select>
-    </div>
-    <p class="stat">Choose whether you're working with images or audio before encoding/decoding.</p>
-  </section>
+  <div class="container">
+    <h1>🔒 DULAS Encoder</h1>
+    <p>Choose what to encode:</p>
+    <select id="fileType">
+      <option value="image">Images</option>
+      <option value="audio">Audio</option>
+    </select>
+    <br>
+    <input type="file" id="fileInput" multiple>
+    <br>
+    <input type="password" id="password" placeholder="Optional password">
+    <br>
+    <button onclick="encodeFiles()">Encode to .dls</button>
+    <div id="output"></div>
+  </div>
 
-  <!-- ENCODE -->
-  <section class="card">
-    <h2>Encode Files ➜ .dulas</h2>
-    <div class="row">
-      <input type="file" id="encodeInput" multiple />
-      <input type="password" id="encodePassword" placeholder="Optional password" />
-      <button id="encodeBtn" disabled>Encode & Download .dulas</button>
-    </div>
-    <p class="stat" id="encodeStat">No files loaded.</p>
-    <div id="encodePreview"></div>
-  </section>
-
-  <!-- DECODE -->
-  <section class="card">
-    <h2>Decode .dulas ➜ Preview / Export</h2>
-    <div class="row">
-      <input type="file" id="decodeInput" multiple />
-      <input type="password" id="decodePassword" placeholder="Password if required" />
-      <button id="decodeBtn" class="secondary" disabled>Decode & Preview</button>
-    </div>
-    <p class="stat" id="decodeStat">No .dulas loaded.</p>
-    <div id="decodePreview"></div>
-  </section>
-</main>
-
-<script>
-// ---------- Constants ----------
-const MAGIC = [0x44,0x55,0x4C,0x41,0x53]; // "DULAS"
-const VERSION = 2;
-const FILE_TYPE = { IMAGE:1, AUDIO:2 };
-
-// ---------- Helpers ----------
-function writeU16LE(arr, n){ arr.push(n & 255, (n>>>8) & 255); }
-function writeU32LE(arr, n){ arr.push(n & 255, (n>>>8)&255, (n>>>16)&255, (n>>>24)&255); }
-function readU16LE(view, o){ return view.getUint16(o, true); }
-function readU32LE(view, o){ return view.getUint32(o, true); }
-function stringToBytes(str){ return Array.from(new TextEncoder().encode(str)); }
-function bytesToString(u8){ return new TextDecoder().decode(u8); }
-
-// ---------- SIMPLE PASSWORD HASH ----------
-async function hashPassword(pw){
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(pw));
-  return new Uint8Array(buf);
-}
-
-// ---------- ENCODER ----------
-async function encodeFiles(files, fileType, password){
-  const out = [];
-  for(const file of files){
-    const fileBytes = new Uint8Array(await file.arrayBuffer());
-    // Header per file
-    out.push(...MAGIC);
-    out.push(VERSION);
-    out.push(fileType===FILE_TYPE.IMAGE? FILE_TYPE.IMAGE: FILE_TYPE.AUDIO);
-    if(password){
-      out.push(1); // password required
-      const pwHash = await hashPassword(password);
-      out.push(...pwHash); // 32 bytes
-    }else{
-      out.push(0); // no password
+  <script>
+    function xorEncryptDecrypt(data, password) {
+      let result = "";
+      for (let i = 0; i < data.length; i++) {
+        result += String.fromCharCode(
+          data.charCodeAt(i) ^ password.charCodeAt(i % password.length)
+        );
+      }
+      return result;
     }
-    writeU32LE(out, fileBytes.length);
-    out.push(...fileBytes);
-  }
-  return new Uint8Array(out);
-}
 
-// ---------- DECODER ----------
-async function decodeFiles(bytes, expectedType, password){
-  const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  const view = new DataView(u8.buffer);
-  const files = [];
-  let offset = 0;
-  while(offset < u8.length){
-    // Check magic
-    for(let i=0;i<5;i++){ if(u8[offset+i]!==MAGIC[i]) throw new Error("Invalid DULAS file"); }
-    offset +=5;
-    const version = u8[offset++]; if(version!==VERSION) throw new Error("Unsupported version");
-    const typeByte = u8[offset++];
-    if(typeByte!==expectedType) throw new Error("File type mismatch for decoding");
-    const pwFlag = u8[offset++];
-    if(pwFlag===1){
-      const storedHash = u8.slice(offset, offset+32); offset+=32;
-      if(!password) throw new Error("Password required");
-      const pwHash = await hashPassword(password);
-      if(!pwHash.every((v,i)=>v===storedHash[i])) throw new Error("Incorrect password");
-    }
-    const length = readU32LE(view, offset); offset+=4;
-    const fileData = u8.slice(offset, offset+length); offset+=length;
-    files.push(fileData);
-  }
-  return files;
-}
+    function encodeFiles() {
+      const fileType = document.getElementById("fileType").value;
+      const files = document.getElementById("fileInput").files;
+      const password = document.getElementById("password").value;
+      const output = document.getElementById("output");
+      output.innerHTML = "";
 
-// ---------- UI ----------
-const modeSelect = document.getElementById('modeSelect');
-const encIn = document.getElementById('encodeInput');
-const encBtn = document.getElementById('encodeBtn');
-const encStat = document.getElementById('encodeStat');
-const encPass = document.getElementById('encodePassword');
-const encPreview = document.getElementById('encodePreview');
+      if (files.length === 0) {
+        alert("Please select at least one file!");
+        return;
+      }
+      if (files.length > 10) {
+        alert("You can only select up to 10 files!");
+        return;
+      }
 
-const decIn = document.getElementById('decodeInput');
-const decBtn = document.getElementById('decodeBtn');
-const decStat = document.getElementById('decodeStat');
-const decPass = document.getElementById('decodePassword');
-const decPreview = document.getElementById('decodePreview');
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          let base64 = reader.result;
+          let finalContent = base64;
 
-// ---------- Encode File Selection ----------
-encIn.addEventListener('change', () => {
-  const files = Array.from(encIn.files || []);
-  const type = modeSelect.value;
-  const allowed = type==='image'? ['image/png','image/jpeg','image/webp'] : ['audio/mpeg','audio/wav','audio/ogg'];
-  const invalid = files.some(f=>!allowed.includes(f.type));
-  if(invalid){ encStat.textContent="File type mismatch"; encBtn.disabled=true; return; }
-  encBtn.disabled = files.length===0;
-  encStat.textContent = `Ready to encode ${files.length} ${type}(s)`;
-  // Preview images
-  encPreview.innerHTML = '';
-  if(type==='image'){
-    files.forEach(f=>{
-      const img = document.createElement('img'); img.style.maxWidth='100px'; img.style.margin='5px';
-      img.src = URL.createObjectURL(f);
-      encPreview.appendChild(img);
-    });
-  }else{
-    files.forEach(f=>{
-      const a = document.createElement('div');
-      a.textContent = f.name; encPreview.appendChild(a);
-    });
-  }
-});
+          if (password) {
+            finalContent = btoa(xorEncryptDecrypt(base64, password));
+          }
 
-// ---------- Encode Button ----------
-encBtn.addEventListener('click', async () => {
-  const files = Array.from(encIn.files || []);
-  const type = modeSelect.value==='image'? FILE_TYPE.IMAGE: FILE_TYPE.AUDIO;
-  const password = encPass.value || null;
-  const dulas = await encodeFiles(files, type, password);
-  const blob = new Blob([dulas], {type:'application/octet-stream'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download = `dulas-${new Date().toISOString().replace(/[:.]/g,'-')}.dulas`;
-  document.body.appendChild(a); a.click(); a.remove();
-  encStat.textContent = `Encoded ${files.length} file(s) successfully!`;
-});
+          const dlsData = {
+            dulasVersion: "1.0",
+            dulasType: fileType,
+            fileName: file.name,
+            fileSize: file.size,
+            createdAt: new Date().toISOString(),
+            passwordProtected: !!password,
+            content: finalContent
+          };
 
-// ---------- Decode File Selection ----------
-decIn.addEventListener('change', () => {
-  decBtn.disabled = (decIn.files.length===0);
-  decStat.textContent = `Ready to decode ${decIn.files.length} file(s)`;
-  decPreview.innerHTML = '';
-});
-
-// ---------- Decode Button ----------
-decBtn.addEventListener('click', async () => {
-  const type = modeSelect.value==='image'? FILE_TYPE.IMAGE: FILE_TYPE.AUDIO;
-  const password = decPass.value || null;
-  const allBytes = [];
-  for(const file of decIn.files){
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    allBytes.push(...bytes);
-  }
-  try{
-    const files = await decodeFiles(new Uint8Array(allBytes), type, password);
-    decPreview.innerHTML = '';
-    if(type===FILE_TYPE.IMAGE){
-      files.forEach((buf,i)=>{
-        const blob = new Blob([buf]); const url = URL.createObjectURL(blob);
-        const img = document.createElement('img'); img.src=url; img.style.maxWidth='150px'; img.style.margin='5px';
-        decPreview.appendChild(img);
-      });
-    }else{
-      files.forEach((buf,i)=>{
-        const blob = new Blob([buf]); const url = URL.createObjectURL(blob);
-        const audio = document.createElement('audio'); audio.controls=true; audio.src=url; decPreview.appendChild(audio);
+          const blob = new Blob([JSON.stringify(dlsData)], { type: "application/dulas" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = file.name.split(".")[0] + ".dls";
+          link.textContent = `⬇ Download ${link.download}`;
+          output.appendChild(link);
+          output.appendChild(document.createElement("br"));
+        };
+        reader.readAsDataURL(file);
       });
     }
-    decStat.textContent = `Decoded ${files.length} file(s) successfully!`;
-  }catch(e){
-    decStat.textContent = `Decoding failed: ${e.message}`;
-  }
-});
-</script>
+  </script>
 </body>
 </html>
