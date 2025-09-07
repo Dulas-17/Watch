@@ -83,6 +83,18 @@
     width: 0%;
     transition: width 0.3s ease;
   }
+  .file-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 8px;
+  }
+  .password-file-item {
+    background: rgba(255, 180, 77, 0.1) !important;
+    border-left: 3px solid var(--warning);
+  }
   @media (max-width:700px){ 
     .main{flex-direction:column} 
     .right{height:320px} 
@@ -112,14 +124,17 @@
         <div class="progress-bar" id="decodeProgress">
           <div class="progress"></div>
         </div>
-        <div id="selectedList" style="margin-top:10px">
-          <div class="hint">Choose .dls files and click Analyze to inspect headers.</div>
+        
+        <div class="file-list-container" id="fileListContainer">
+          <div id="selectedList" style="margin-top:10px">
+            <div class="hint">Choose .dls files and click Analyze to inspect headers.</div>
+          </div>
         </div>
 
         <div class="password-section" id="passwordSection">
-          <label class="hint">Password required:</label>
+          <label class="hint">Password required for protected files:</label>
           <input id="password" type="password" placeholder="Enter password" style="width:100%; margin-top:6px;">
-          <div class="hint" style="margin-top: 4px;">This file is password protected</div>
+          <div class="hint" style="margin-top: 4px;">Some selected files are password protected</div>
         </div>
 
         <div style="margin-top:10px">
@@ -304,15 +319,30 @@ const output = document.getElementById('output');
 const passwordField = document.getElementById('password');
 const passwordSection = document.getElementById('passwordSection');
 const decodeBtn = document.getElementById('decodeBtn');
+const fileListContainer = document.getElementById('fileListContainer');
 
 let selectedFiles = []; // File objects
 let parsedFiles = []; // parsed headers + content
+
+// Track scroll position for file list
+let scrollPosition = 0;
+fileListContainer.addEventListener('scroll', () => {
+  scrollPosition = fileListContainer.scrollTop;
+});
+
+// Restore scroll position after UI updates
+function restoreScrollPosition() {
+  setTimeout(() => {
+    fileListContainer.scrollTop = scrollPosition;
+  }, 10);
+}
 
 dlsInput.addEventListener('change', e => {
   selectedFiles = Array.from(e.target.files);
   parsedFiles = [];
   selectedList.innerHTML = '';
   passwordSection.style.display = 'none';
+  passwordField.value = '';
   output.innerHTML = '<div class="hint">Choose .dls files and click Analyze to inspect headers.</div>';
   showStatus('');
 });
@@ -327,6 +357,7 @@ analyzeBtn.addEventListener('click', async () => {
   parsedFiles = [];
   selectedList.innerHTML = '';
   passwordSection.style.display = 'none';
+  passwordField.value = '';
   showProgress(0);
   output.innerHTML = '<div class="hint">Analyzing headers...</div>';
   
@@ -356,6 +387,9 @@ analyzeBtn.addEventListener('click', async () => {
         // Show parsed header in UI
         const box = document.createElement('div');
         box.className = 'file-item';
+        if (parsed.header.passwordProtected) {
+          box.classList.add('password-file-item');
+        }
         
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
@@ -366,6 +400,7 @@ analyzeBtn.addEventListener('click', async () => {
           if (index !== -1) {
             parsedFiles.splice(index, 1);
             selectedList.removeChild(box);
+            updatePasswordSectionVisibility();
           }
         });
         
@@ -403,6 +438,7 @@ analyzeBtn.addEventListener('click', async () => {
           <div style="opacity:0.8;font-size:13px">
             ${parsed.header.type} • 
             ${parsed.header.meta.originalSize ? (parsed.header.meta.originalSize / 1024).toFixed(1) + ' KB' : 'size unknown'}
+            ${parsed.header.passwordProtected ? '• Password protected' : ''}
           </div>
         `;
         
@@ -443,17 +479,15 @@ analyzeBtn.addEventListener('click', async () => {
     }
     
     showProgress(100);
+    updatePasswordSectionVisibility();
     
-    // Check if any files need password
-    const needsPassword = parsedFiles.some(p => p.header.passwordProtected);
-    if (needsPassword) {
-      passwordSection.style.display = 'block';
-      showStatus('Some files require a password', 'warning');
-    } else {
+    if (parsedFiles.length > 0) {
       showStatus(`Analyzed ${parsedFiles.length} file(s) successfully`, 'success');
+      output.innerHTML = `<div class="hint">Analysis complete. ${parsedFiles.length} file(s) ready for decoding.</div>`;
+    } else {
+      showStatus('No valid DULAS files found', 'error');
+      output.innerHTML = '<div class="hint">No valid DULAS files were found.</div>';
     }
-    
-    output.innerHTML = `<div class="hint">Analysis complete. ${parsedFiles.length} file(s) ready for decoding.</div>`;
     
   } catch (err) {
     console.error('Analysis error:', err);
@@ -462,8 +496,19 @@ analyzeBtn.addEventListener('click', async () => {
   } finally {
     analyzeBtn.disabled = false;
     setTimeout(() => hideProgress(), 500);
+    restoreScrollPosition();
   }
 });
+
+// Update password section visibility based on files
+function updatePasswordSectionVisibility() {
+  const hasPasswordProtected = parsedFiles.some(p => p.header.passwordProtected);
+  passwordSection.style.display = hasPasswordProtected ? 'block' : 'none';
+  
+  if (hasPasswordProtected) {
+    showStatus('Some files require a password', 'warning');
+  }
+}
 
 decodeBtn.addEventListener('click', async () => {
   if (parsedFiles.length === 0) {
@@ -476,8 +521,18 @@ decodeBtn.addEventListener('click', async () => {
   showProgress(0);
   output.innerHTML = '';
   
+  // Check if we have password-protected files but no password provided
+  const hasPasswordProtected = parsedFiles.some(p => p.header.passwordProtected);
+  if (hasPasswordProtected && !pwd) {
+    showStatus('Password required for protected files', 'error');
+    decodeBtn.disabled = false;
+    hideProgress();
+    return;
+  }
+  
   try {
     let successCount = 0;
+    let errorCount = 0;
     
     for (let i = 0; i < parsedFiles.length; i++) {
       const p = parsedFiles[i];
@@ -485,17 +540,13 @@ decodeBtn.addEventListener('click', async () => {
       showProgress((i / parsedFiles.length) * 100);
       
       output.innerHTML += `<div class="hint">Decoding ${header.fileName}...</div>`;
+      restoreScrollPosition();
       
       try {
         let plain = p.contentBytes;
         
         // Decrypt if password protected
         if (header.passwordProtected) {
-          if (!pwd) {
-            output.innerHTML += `<div class="status-error">${header.fileName} requires a password. Skipping.</div>`;
-            continue;
-          }
-          
           try {
             const ks = await buildKeystream(pwd, p.contentBytes.length, header.salt);
             const temp = new Uint8Array(p.contentBytes.length);
@@ -503,8 +554,20 @@ decodeBtn.addEventListener('click', async () => {
               temp[i] = p.contentBytes[i] ^ ks[i];
             }
             plain = temp;
+            
+            // Simple validation - check if the decrypted data looks reasonable
+            // For images, check if it starts with common image magic bytes
+            if (header.type === 'image' && plain.length > 10) {
+              const view = new DataView(plain.buffer);
+              const magic = view.getUint16(0, false);
+              // Check for JPEG, PNG, GIF magic numbers
+              if (magic !== 0xFFD8 && magic !== 0x8950 && magic !== 0x4749) {
+                throw new Error('Password may be incorrect - decrypted data does not appear to be a valid image');
+              }
+            }
           } catch (e) {
-            output.innerHTML += `<div class="status-error">Failed to decrypt ${header.fileName} — wrong password?</div>`;
+            output.innerHTML += `<div class="status-error">Failed to decrypt ${header.fileName} - ${e.message || 'wrong password?'}</div>`;
+            errorCount++;
             continue;
           }
         }
@@ -586,14 +649,17 @@ decodeBtn.addEventListener('click', async () => {
         
       } catch (err) {
         output.innerHTML += `<div class="status-error">Error decoding ${header.fileName}: ${err.message || err}</div>`;
+        errorCount++;
       }
+      
+      restoreScrollPosition();
     }
     
     showProgress(100);
     
     if (successCount > 0) {
       showStatus(`Successfully decoded ${successCount} file(s)`, 'success');
-      output.innerHTML = `<div class="hint">Decoded ${successCount} file(s) successfully.</div>` + output.innerHTML;
+      output.innerHTML = `<div class="hint">Decoded ${successCount} file(s) successfully. ${errorCount > 0 ? `${errorCount} file(s) failed.` : ''}</div>` + output.innerHTML;
     } else {
       showStatus('No files were successfully decoded', 'error');
       output.innerHTML = '<div class="hint">No files were successfully decoded.</div>';
@@ -606,6 +672,7 @@ decodeBtn.addEventListener('click', async () => {
   } finally {
     decodeBtn.disabled = false;
     setTimeout(() => hideProgress(), 500);
+    restoreScrollPosition();
   }
 });
 </script>
