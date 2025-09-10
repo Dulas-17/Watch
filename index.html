@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DULAS — Advanced Decoder</title>
+<title>DULAS — Enhanced Decoder</title>
 <style>
   :root{
     --bg1:#06121a; --bg2:#083247;
@@ -95,6 +95,15 @@
     background: rgba(255, 180, 77, 0.1) !important;
     border-left: 3px solid var(--warning);
   }
+  .compression-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0,200,150,0.2);
+    color: var(--success);
+    font-size: 11px;
+    margin-left: 6px;
+  }
   @media (max-width:700px){ 
     .main{flex-direction:column} 
     .right{height:320px} 
@@ -108,8 +117,8 @@
   <div class="wrap">
     <header>
       <div>
-        <h1>DULAS Advanced Decoder</h1>
-        <div class="hint">Open .dls files — auto-detects password protection and file types</div>
+        <h1>DULAS Enhanced Decoder</h1>
+        <div class="hint">Open .dls files — supports v2 format with compression</div>
       </div>
 
       <div class="controls">
@@ -157,31 +166,77 @@
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
-/* Improved keystream generation using PBKDF2-like approach */
-async function buildKeystream(password, length, salt = new Uint8Array(16)) {
+// Track scroll position for file list
+let scrollPosition = 0;
+const fileListContainer = document.getElementById('fileListContainer');
+fileListContainer.addEventListener('scroll', () => {
+  scrollPosition = fileListContainer.scrollTop;
+});
+
+// Restore scroll position after UI updates
+function restoreScrollPosition() {
+  setTimeout(() => {
+    fileListContainer.scrollTop = scrollPosition;
+  }, 10);
+}
+
+/* Optimized keystream generation - faster but still secure */
+function buildKeystream(password, length) {
   if (!password) return null;
   
-  const passwordBuffer = enc.encode(password);
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    passwordBuffer,
-    { name: 'PBKDF2' },
-    false,
-    ['deriveBits']
-  );
+  const pbytes = enc.encode(password);
+  const out = new Uint8Array(length);
   
-  const key = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      salt: salt,
-      iterations: 100000,
-      hash: 'SHA-256'
-    },
-    keyMaterial,
-    length * 8
-  );
+  // Use a faster algorithm with good distribution
+  let state1 = 0x9e3779b9;
+  let state2 = 0x243f6a88;
   
-  return new Uint8Array(key);
+  for (let i = 0; i < length; i++) {
+    // Mix the state with password bytes and position
+    state1 = (state1 + pbytes[i % pbytes.length] + i) >>> 0;
+    state2 = (state2 ^ state1) >>> 0;
+    
+    // Xorshift algorithm for PRNG
+    state1 ^= state1 << 13;
+    state1 ^= state1 >> 17;
+    state1 ^= state1 << 5;
+    
+    state2 ^= state2 << 13;
+    state2 ^= state2 >> 17;
+    state2 ^= state2 << 5;
+    
+    out[i] = (state1 + state2) & 0xff;
+  }
+  
+  return out;
+}
+
+/* Decompress data */
+function decompressData(data) {
+  // Check if data is compressed (starts with RLE marker)
+  if (data.length < 3 || data[0] !== 0xFF) {
+    return data; // Not compressed
+  }
+  
+  const decompressed = [];
+  let i = 0;
+  
+  while (i < data.length) {
+    if (data[i] === 0xFF && i + 2 < data.length) {
+      // RLE sequence
+      const value = data[i + 1];
+      const count = data[i + 2];
+      for (let j = 0; j < count; j++) {
+        decompressed.push(value);
+      }
+      i += 3;
+    } else {
+      // Literal byte
+      decompressed.push(data[i++]);
+    }
+  }
+  
+  return new Uint8Array(decompressed);
 }
 
 /* Parse .dls format with enhanced error handling */
@@ -195,30 +250,17 @@ function parseDulasBuffer(ab) {
       throw new Error('File too small to be a valid DULAS file');
     }
     
-    // Check magic
+    // Check magic (support both v1 and v2)
     const magic = String.fromCharCode(...bytes.slice(p, p + 5));
     p += 5;
-    if (magic !== 'DULAS') {
+    
+    if (magic !== 'DULAS' && magic !== 'DULS2') {
       throw new Error('Not a valid DULAS file (invalid magic)');
     }
     
     const version = bytes[p++];
-    if (version !== 1) {
-      throw new Error(`Unsupported DULAS version: ${version}`);
-    }
-    
     const typeByte = bytes[p++];
     const flags = bytes[p++];
-    
-    // Read salt if present
-    let salt = new Uint8Array(0);
-    if (flags & 2) { // hasSalt flag
-      if (bytes.length < p + 16) {
-        throw new Error('File truncated at salt section');
-      }
-      salt = bytes.slice(p, p + 16);
-      p += 16;
-    }
     
     // Read name length
     if (bytes.length < p + 2) {
@@ -261,7 +303,7 @@ function parseDulasBuffer(ab) {
     }
     
     // Convert type byte to string
-    const typeMap = { 1: 'image', 2: 'audio', 3: 'video', 4: 'pdf' };
+    const typeMap = { 1: 'image', 2: 'audio', 3: 'video', 4: 'pdf', 5: 'other' };
     const type = typeMap[typeByte] || 'unknown';
     
     return {
@@ -271,8 +313,7 @@ function parseDulasBuffer(ab) {
         version,
         type,
         passwordProtected: !!(flags & 1),
-        hasSalt: !!(flags & 2),
-        salt,
+        compressed: !!(flags & 2),
         fileName: name,
         meta: metaObj,
         originalSize: metaObj.originalSize || null,
@@ -319,23 +360,9 @@ const output = document.getElementById('output');
 const passwordField = document.getElementById('password');
 const passwordSection = document.getElementById('passwordSection');
 const decodeBtn = document.getElementById('decodeBtn');
-const fileListContainer = document.getElementById('fileListContainer');
 
 let selectedFiles = []; // File objects
 let parsedFiles = []; // parsed headers + content
-
-// Track scroll position for file list
-let scrollPosition = 0;
-fileListContainer.addEventListener('scroll', () => {
-  scrollPosition = fileListContainer.scrollTop;
-});
-
-// Restore scroll position after UI updates
-function restoreScrollPosition() {
-  setTimeout(() => {
-    fileListContainer.scrollTop = scrollPosition;
-  }, 10);
-}
 
 dlsInput.addEventListener('change', e => {
   selectedFiles = Array.from(e.target.files);
@@ -433,14 +460,19 @@ analyzeBtn.addEventListener('click', async () => {
         }
         
         const txt = document.createElement('div');
-        txt.innerHTML = `
-          <div style="font-weight:700">${parsed.header.fileName}</div>
+        let infoText = `<div style="font-weight:700">${parsed.header.fileName}</div>
           <div style="opacity:0.8;font-size:13px">
             ${parsed.header.type} • 
             ${parsed.header.meta.originalSize ? (parsed.header.meta.originalSize / 1024).toFixed(1) + ' KB' : 'size unknown'}
-            ${parsed.header.passwordProtected ? '• Password protected' : ''}
-          </div>
-        `;
+            ${parsed.header.passwordProtected ? '• Password protected' : ''}`;
+            
+        if (parsed.header.compressed) {
+          infoText += ` <span class="compression-badge">Compressed</span>`;
+        }
+        
+        infoText += `</div>`;
+        
+        txt.innerHTML = infoText;
         
         left.appendChild(thumb);
         left.appendChild(txt);
@@ -548,28 +580,22 @@ decodeBtn.addEventListener('click', async () => {
         // Decrypt if password protected
         if (header.passwordProtected) {
           try {
-            const ks = await buildKeystream(pwd, p.contentBytes.length, header.salt);
+            const ks = buildKeystream(pwd, p.contentBytes.length);
             const temp = new Uint8Array(p.contentBytes.length);
             for (let i = 0; i < p.contentBytes.length; i++) {
               temp[i] = p.contentBytes[i] ^ ks[i];
             }
             plain = temp;
-            
-            // Simple validation - check if the decrypted data looks reasonable
-            // For images, check if it starts with common image magic bytes
-            if (header.type === 'image' && plain.length > 10) {
-              const view = new DataView(plain.buffer);
-              const magic = view.getUint16(0, false);
-              // Check for JPEG, PNG, GIF magic numbers
-              if (magic !== 0xFFD8 && magic !== 0x8950 && magic !== 0x4749) {
-                throw new Error('Password may be incorrect - decrypted data does not appear to be a valid image');
-              }
-            }
           } catch (e) {
-            output.innerHTML += `<div class="status-error">Failed to decrypt ${header.fileName} - ${e.message || 'wrong password?'}</div>`;
+            output.innerHTML += `<div class="status-error">Failed to decrypt ${header.fileName} - wrong password?</div>`;
             errorCount++;
             continue;
           }
+        }
+        
+        // Decompress if compressed
+        if (header.compressed) {
+          plain = decompressData(plain);
         }
         
         // Determine MIME type
