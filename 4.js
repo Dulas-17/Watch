@@ -5,6 +5,22 @@
 function initializeHomeSection() {
     console.log("Initializing home section...");
     updateHomeContent();
+    
+    // Add scroll tracking for home section
+    setupHomeScrollTracking();
+}
+
+// Setup scroll tracking for home section
+function setupHomeScrollTracking() {
+    const homeSection = document.getElementById('home');
+    if (!homeSection) return;
+    
+    // Save scroll position when home section is active and user scrolls
+    homeSection.addEventListener('scroll', () => {
+        if (homeSection.classList.contains('active')) {
+            saveScrollPosition('home');
+        }
+    });
 }
 
 // Update home section with latest content
@@ -157,6 +173,9 @@ function createHomeItem(item, type, originalIndex, isFeatured = false) {
 
 // Navigate to item details from home section
 function navigateFromHome(type, index) {
+    // Save current scroll position before navigating
+    saveScrollPosition('home');
+    
     // Save that we're coming from home section
     localStorage.setItem('originSection', 'home');
     
