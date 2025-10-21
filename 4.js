@@ -1,41 +1,181 @@
-// app.js - Complete, Unified JavaScript File
+// Home Section Logic
+// This file handles the home section functionality
 
-// ----------------------------------------------------
-// I. Data Placeholders & Home Content (Previously 2.js, 3.js, home-data.js)
-// ----------------------------------------------------
+// Initialize home section
+function initializeHomeSection() {
+    console.log("Initializing home section...");
+    updateHomeContent();
+}
 
-// NOTE: You must replace these empty arrays with your actual series and movie objects.
-// Each item should have at least: 'title', 'image', 'genres', and 'id' (optional, but good for linking).
-// Series also need an 'episodes' array.
-const seriesData = [
-    // EXAMPLE SERIES (REPLACE ME)
-    { id: "s001", title: "The Coder's Quest", image: "https://placehold.co/200x300/1e293b/f0f9ff?text=Coder", genres: ["Sci-Fi", "Drama"], description: "A thrilling story of a developer fighting bugs.", episodes: [{title: "E01 - The Setup", link: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"}] },
-    { id: "s002", title: "Bay Watch Classics", image: "https://placehold.co/200x300/10b981/f0f9ff?text=Bay+Watch", genres: ["Action", "Nostalgia"], description: "Lifeguards saving the day.", episodes: [{title: "E01 - Pilot", link: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"}] },
-    { id: "s003", title: "Gemini Strikes", image: "https://placehold.co/200x300/6366f1/f0f9ff?text=Gemini", genres: ["Adventure", "Fantasy"], description: "The epic saga of an AI that gains sentience.", episodes: [{title: "S01E01", link: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"}] },
-]; 
-const movieData = [
-    // EXAMPLE MOVIES (REPLACE ME)
-    { id: "m001", title: "The Backend Breach", image: "https://placehold.co/200x300/f59e0b/1f2937?text=Breach", genres: ["Thriller", "Tech"], description: "A movie about a massive security flaw.", link: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" },
-    { id: "m002", title: "Midnight Algorithm", image: "https://placehold.co/200x300/ef4444/f9fafb?text=Midnight", genres: ["Horror", "Mystery"], description: "A strange new algorithm drives people mad.", link: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" },
-]; 
+// Update home section with latest content
+function updateHomeContent() {
+    updateLatestMovies();
+    updateLatestSeries();
+    updateFeaturedContent();
+    updateRecentlyAdded();
+}
 
-// Manual Home Content
-const upcomingReleases = [
-    {
-        title: "The Next Generation",
-        image: "https://placehold.co/200x300/a855f7/f3f4f6?text=Next+Gen",
-        genre: "Sci-Fi",
-        releaseDate: "Coming February 2026",
-    },
-    {
-        title: "Echoes of the Past",
-        image: "https://placehold.co/200x300/ec4899/f3f4f6?text=Echoes",
-        genre: "Historical Drama",
-        releaseDate: "Coming March 2026",
-    },
-];
+// Get latest movies (last 6 added)
+function getLatestMovies() {
+    return content.movies.slice(-6).reverse();
+}
 
-const siteInfoBlock = {
-    title: "Welcome to BayWatch!",
-    message: "We highly advise you to download Google Drive, which will make your watching experience better and allow you to watch movies or shows in their highest quality. When you watch content, press the black box on the top right to enable all features. Thank you!",
-};
+// Get latest series (last 6 added)
+function getLatestSeries() {
+    return content.series.slice(-6).reverse();
+}
+
+// Get featured content (mix of popular movies and series)
+function getFeaturedContent() {
+    const featuredMovies = content.movies.filter(movie => 
+        movie.featured || movie.rating > 4
+    ).slice(0, 3);
+    
+    const featuredSeries = content.series.filter(series => 
+        series.featured || series.rating > 4
+    ).slice(0, 3);
+    
+    return [...featuredMovies, ...featuredSeries].sort(() => Math.random() - 0.5).slice(0, 6);
+}
+
+// Get recently added content (last 8 items from both movies and series)
+function getRecentlyAdded() {
+    const recentMovies = content.movies.slice(-4).reverse();
+    const recentSeries = content.series.slice(-4).reverse();
+    
+    return [...recentMovies, ...recentSeries].sort((a, b) => {
+        // Simple timestamp simulation - in real app, you'd have actual timestamps
+        return Math.random() - 0.5;
+    }).slice(0, 8);
+}
+
+// Update latest movies section
+function updateLatestMovies() {
+    const container = document.getElementById('latestMovies');
+    const latestMovies = getLatestMovies();
+    
+    container.innerHTML = '';
+    
+    if (latestMovies.length === 0) {
+        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No movies available yet.</p>';
+        return;
+    }
+    
+    latestMovies.forEach((movie, index) => {
+        const originalIndex = content.movies.findIndex(m => m.title === movie.title);
+        const movieElement = createHomeItem(movie, 'movie', originalIndex);
+        container.appendChild(movieElement);
+    });
+}
+
+// Update latest series section
+function updateLatestSeries() {
+    const container = document.getElementById('latestSeries');
+    const latestSeries = getLatestSeries();
+    
+    container.innerHTML = '';
+    
+    if (latestSeries.length === 0) {
+        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No series available yet.</p>';
+        return;
+    }
+    
+    latestSeries.forEach((series, index) => {
+        const originalIndex = content.series.findIndex(s => s.title === series.title);
+        const seriesElement = createHomeItem(series, 'series', originalIndex);
+        container.appendChild(seriesElement);
+    });
+}
+
+// Update featured content section
+function updateFeaturedContent() {
+    const container = document.getElementById('featuredContent');
+    const featuredItems = getFeaturedContent();
+    
+    container.innerHTML = '';
+    
+    if (featuredItems.length === 0) {
+        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No featured content available.</p>';
+        return;
+    }
+    
+    featuredItems.forEach((item, index) => {
+        const type = item.episodes ? 'series' : 'movie';
+        const originalIndex = type === 'series' ? 
+            content.series.findIndex(s => s.title === item.title) : 
+            content.movies.findIndex(m => m.title === item.title);
+        
+        const itemElement = createHomeItem(item, type, originalIndex, true);
+        container.appendChild(itemElement);
+    });
+}
+
+// Update recently added section
+function updateRecentlyAdded() {
+    const container = document.getElementById('recentlyAdded');
+    const recentItems = getRecentlyAdded();
+    
+    container.innerHTML = '';
+    
+    if (recentItems.length === 0) {
+        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No recently added content.</p>';
+        return;
+    }
+    
+    recentItems.forEach((item, index) => {
+        const type = item.episodes ? 'series' : 'movie';
+        const originalIndex = type === 'series' ? 
+            content.series.findIndex(s => s.title === item.title) : 
+            content.movies.findIndex(m => m.title === item.title);
+        
+        const itemElement = createHomeItem(item, type, originalIndex);
+        container.appendChild(itemElement);
+    });
+}
+
+// Create home item element
+function createHomeItem(item, type, originalIndex, isFeatured = false) {
+    const div = document.createElement('div');
+    div.className = 'home-item';
+    
+    // Add featured badge if needed
+    const featuredBadge = isFeatured ? '<span class="featured-badge">Featured</span>' : '';
+    
+    div.innerHTML = `
+        <img src="${item.image}" alt="${item.title}" />
+        ${featuredBadge}
+        <div class="home-item-content">
+            <h4>${item.title}</h4>
+            <p>${item.description ? item.description.substring(0, 60) + '...' : 'No description available'}</p>
+            <button onclick="navigateFromHome('${type}', ${originalIndex})" class="btn">View Details</button>
+            <button onclick="addToWatchLater('${type}', ${originalIndex})" class="watch-later-btn">Watch Later</button>
+        </div>
+    `;
+    
+    return div;
+}
+
+// Navigate to item details from home section
+function navigateFromHome(type, index) {
+    // Save that we're coming from home section
+    localStorage.setItem('originSection', 'home');
+    
+    if (type === 'series') {
+        showSeriesDetails(index, 'home');
+    } else {
+        showMovieDetails(index, 'home');
+    }
+}
+
+// Listen for content updates to refresh home section
+document.addEventListener('contentUpdated', function() {
+    if (document.getElementById('home').classList.contains('active')) {
+        updateHomeContent();
+    }
+});
+
+// Simulate content update event (you would call this when adding new content)
+function triggerContentUpdate() {
+    const event = new Event('contentUpdated');
+    document.dispatchEvent(event);
+}
