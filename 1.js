@@ -1,28 +1,56 @@
+// Data for series and movies. (Assumes these are defined in 2.js and 3.js)
+// const seriesData = [...]
+// const movieData = [...]
 
-
-
-// ----------------------------------------------------
-// II. Global Variables & Setup
-// ----------------------------------------------------
 const content = {
   series: seriesData,
   movies: movieData,
 };
 
-// Global variables for scroll, video, and state management
-let searchDebounceTimeout;
-let suggestionDebounceTimeout;
-let currentPlayingType = null;
-let currentPlayingIndex = null;
-let scrollPosition = {}; // Not strictly needed if using localStorage directly, but good for tracking
+const genreButtons = document.querySelector('.genre-buttons');
+const header = document.querySelector('header'); // if you have a fixed header
+const originalOffset = genreButtons.offsetTop; // original vertical position
+let lastScroll = window.pageYOffset;
 
-// Sound setup (assuming 'click2.mp3' is in the root directory)
-const buttonSound = new Audio('click2.mp3'); 
+window.addEventListener('scroll', () => {
+  const currentScroll = window.pageYOffset;
+
+  if (currentScroll > originalOffset) {
+    if (currentScroll < lastScroll) {
+      // Scrolling up → stick the buttons
+      genreButtons.style.position = 'fixed';
+      genreButtons.style.top = header.offsetHeight + 'px'; // just below header
+      genreButtons.style.left = '0';
+      genreButtons.style.right = '0';
+      genreButtons.style.width = '100%';
+      genreButtons.style.zIndex = '999';
+    } else {
+      // Scrolling down → return to original place
+      genreButtons.style.position = 'relative';
+      genreButtons.style.top = '0';
+      genreButtons.style.left = '0';
+      genreButtons.style.right = '0';
+      genreButtons.style.width = 'auto';
+    }
+  } else {
+    // Before reaching the original position → reset
+    genreButtons.style.position = 'relative';
+    genreButtons.style.top = '0';
+    genreButtons.style.left = '0';
+    genreButtons.style.right = '0';
+    genreButtons.style.width = 'auto';
+  }
+
+  lastScroll = currentScroll;
+});
+
+// Place this at the bottom of your JS, after DOMContentLoaded or at the end of the file
+const buttonSound = new Audio('click2.mp3'); // Replace 'click.mp3' with your sound file path
 
 document.addEventListener('click', (e) => {
   if (e.target.tagName === 'BUTTON') {
     try {
-      buttonSound.currentTime = 0;
+      buttonSound.currentTime = 0; // reset if sound is still playing
       buttonSound.play();
     } catch (err) {
       console.error('Failed to play button sound:', err);
@@ -30,88 +58,54 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// Global variables for debouncing and video tracking
+let searchDebounceTimeout;
+let suggestionDebounceTimeout;
+let currentPlayingType = null;
+let currentPlayingIndex = null;
+let scrollPosition = {}; // New global object to store scroll positions
 
-// ----------------------------------------------------
-// III. Sticky Genre Button Logic (Your Existing Logic)
-// ----------------------------------------------------
+// --- Video Playback & Tracking ---
 
-// NOTE: This logic assumes a header exists and the genre buttons are NOT sticky by default.
-const genreButtons = document.querySelector('.genre-buttons');
-const header = document.querySelector('header'); // Assuming a header element exists
-let lastScroll = window.pageYOffset;
+function playEpisode(link, episodeTitle = null, type, index) {
+  const player = document.getElementById('videoFullScreen');
+  const iframe = player.querySelector('iframe');
 
-// Wait for DOMContentLoaded to get accurate offset
-let originalOffset = 0; 
+  currentPlayingType = type;
+  currentPlayingIndex = index;
 
-window.addEventListener('scroll', () => {
-    // Check if the current active section has a genre-buttons container visible
-    const activeGenreContainer = document.querySelector('.section.active .genre-buttons');
-    if (!activeGenreContainer || activeGenreContainer.style.display === 'none') {
-        return; // Don't run sticky logic if not viewing a list page
-    }
+  iframe.src = link;
+  player.style.display = 'flex';
+}
 
-    // Re-calculate offset if it's 0 (only needed once after initial render)
-    if (originalOffset === 0 && activeGenreContainer) {
-        originalOffset = activeGenreContainer.offsetTop;
-    }
+function closeFullScreen() {
+  const player = document.getElementById('videoFullScreen');
+  const iframe = player.querySelector('iframe');
 
-    const currentScroll = window.pageYOffset;
+  if (currentPlayingType !== null && currentPlayingIndex !== null) {
+      saveAsWatched(currentPlayingType, currentPlayingIndex);
+  }
 
-    // Simplified sticky logic
-    if (currentScroll > originalOffset) {
-        // Scrolling past the original position
-        activeGenreContainer.style.position = 'fixed';
-        activeGenreContainer.style.top = (header ? header.offsetHeight : 0) + 'px';
-        activeGenreContainer.style.left = '0';
-        activeGenreContainer.style.right = '0';
-        activeGenreContainer.style.width = '100%';
-        activeGenreContainer.style.zIndex = '999';
-        activeGenreContainer.style.paddingLeft = '1rem'; // Maintain padding when fixed
-    } else {
-        // Before or at the original position
-        activeGenreContainer.style.position = 'relative';
-        activeGenreContainer.style.top = '0';
-        activeGenreContainer.style.left = '0';
-        activeGenreContainer.style.right = '0';
-        activeGenreContainer.style.width = 'auto';
-        activeGenreContainer.style.paddingLeft = '0';
-    }
+  iframe.src = '';
+  player.style.display = 'none';
+  restoreScrollPosition(localStorage.getItem('lastActiveSection'));
 
-    lastScroll = currentScroll;
-});
+  currentPlayingType = null;
+  currentPlayingIndex = null;
+}
 
-// ----------------------------------------------------
-// IV. Scroll & State Management (UPDATED for Scroll Fix)
-// ----------------------------------------------------
-
-/**
- * Saves the current scroll position of the window (or a specific container)
- * for the given section ID.
- */
+// --- Local Storage Utilities ---
 function saveScrollPosition(sectionId) {
-  if (!sectionId) return;
-  
-  // For the whole document, use window.scrollY
+  scrollPosition[sectionId] = window.scrollY;
   localStorage.setItem(`scrollPosition_${sectionId}`, window.scrollY);
   console.log(`Saved scroll for ${sectionId}: ${window.scrollY}`);
 }
 
-/**
- * Restores the scroll position for the given section ID.
- */
 function restoreScrollPosition(sectionId) {
   const storedScrollY = localStorage.getItem(`scrollPosition_${sectionId}`);
   if (storedScrollY) {
-    const scrollValue = parseInt(storedScrollY, 10);
-    // Use window.scrollTo for smooth restoration
-    window.scrollTo({
-        top: scrollValue,
-        behavior: 'smooth'
-    });
+    window.scrollTo(0, parseInt(storedScrollY, 10));
     console.log(`Restored scroll for ${sectionId}: ${storedScrollY}`);
-  } else {
-    // Ensure we scroll to top if no position is saved
-    window.scrollTo(0, 0);
   }
 }
 
@@ -146,146 +140,8 @@ function isWatched(type, index) {
   return localStorage.getItem(key) === 'true';
 }
 
-
-// ----------------------------------------------------
-// V. Video Playback & Tracking
-// ----------------------------------------------------
-
-function playEpisode(link, episodeTitle = null, type, index) {
-  const player = document.getElementById('videoFullScreen');
-  const iframe = player.querySelector('iframe');
-
-  // Save the scroll position of the current background section before opening video
-  const currentActiveSection = document.querySelector('.section.active');
-  if (currentActiveSection) {
-      saveScrollPosition(currentActiveSection.id);
-  }
-
-  currentPlayingType = type;
-  currentPlayingIndex = index;
-
-  iframe.src = link;
-  player.style.display = 'flex';
-}
-
-function closeFullScreen() {
-  const player = document.getElementById('videoFullScreen');
-  const iframe = player.querySelector('iframe');
-
-  if (currentPlayingType !== null && currentPlayingIndex !== null) {
-      saveAsWatched(currentPlayingType, currentPlayingIndex);
-  }
-
-  iframe.src = '';
-  player.style.display = 'none';
-  
-  // Restore scroll position after closing video
-  restoreScrollPosition(localStorage.getItem('lastActiveSection'));
-
-  currentPlayingType = null;
-  currentPlayingIndex = null;
-}
-
-
-// ----------------------------------------------------
-// VI. Home Section Rendering Logic (NEW)
-// ----------------------------------------------------
-
-function createStripHeader(title) {
-    return `
-        <h2 style="margin-top: 2.5rem; margin-bottom: 0.5rem; color: var(--primary-blue);">${title}</h2>
-        <div class="home-strip-container">
-    `;
-}
-
-// Reuses the card structure for visual consistency
-function createHomeContentCard(item, type, originalIndex) {
-    const detailFunctionCall = `saveScrollAndShowDetails('${type}', ${originalIndex})`;
-    
-    return `
-        <div class="series-item" style="flex: 0 0 auto; width: 130px;">
-            <img src="${item.image}" alt="${item.title}" />
-            <h4 style="font-size: 0.8rem; margin: 0.5rem 0 0.2rem;">${item.title}</h4>
-            <button onclick="${detailFunctionCall}" class="btn" style="padding: 0.4rem; font-size: 0.7rem; margin-top: 0.4rem;">Open</button>
-        </div>
-    `;
-}
-
-function createUpcomingCardHTML(item) {
-    return `
-        <div class="series-item" style="flex: 0 0 auto; width: 130px; border: 1px solid #ffc107; cursor: default;">
-            <img src="${item.image}" alt="${item.title}" />
-            <h4 style="font-size: 0.8rem; margin: 0.5rem 0 0.2rem;">${item.title}</h4>
-            <p style="font-size: 0.7rem; color: #e0a800; font-weight: bold; margin: 0.2rem 0;">${item.releaseDate}</p>
-        </div>
-    `;
-}
-
-function renderHomeSection() {
-    const container = document.getElementById('homeContentStrips');
-    if (!container) return;
-    
-    // Combine all content and add type/index for detail linking
-    // We must use the original index within the respective movie/series array
-    const allContent = [
-        ...content.series.map((s, i) => ({ ...s, originalIndex: i, type: 'series' })),
-        ...content.movies.map((m, i) => ({ ...m, originalIndex: i, type: 'movie' }))
-    ];
-
-    let html = '';
-    
-    // --- 1. Site Info/Welcome Block ---
-    html += `
-        <div class="home-info-block">
-            <h1>${siteInfoBlock.title}</h1>
-            <p>${siteInfoBlock.message}</p>
-        </div>
-    `;
-
-    // --- 2. Trending Now (First 10 items) ---
-    const trendingContent = allContent.slice(0, 10);
-    
-    html += createStripHeader("🔥 Trending Now");
-    trendingContent.forEach(item => {
-        html += createHomeContentCard(item, item.type, item.originalIndex);
-    });
-    html += `</div>`;
-
-    // --- 3. Discovery Picks (Random Mix) ---
-    const discoveryContent = [...allContent]
-        .sort(() => 0.5 - Math.random()) 
-        .slice(0, 15); 
-
-    html += createStripHeader("✨ Discovery Picks");
-    discoveryContent.forEach(item => {
-        html += createHomeContentCard(item, item.type, item.originalIndex);
-    });
-    html += `</div>`;
-
-    // --- 4. Upcoming Releases (Manual Data) ---
-    if (upcomingReleases.length > 0) {
-        html += createStripHeader("🗓️ Upcoming Releases");
-        upcomingReleases.forEach(item => {
-            html += createUpcomingCardHTML(item);
-        });
-        html += `</div>`;
-    }
-
-    container.innerHTML = html;
-}
-
-
-// ----------------------------------------------------
-// VII. Section Management (UPDATED for Scroll Fix)
-// ----------------------------------------------------
-
+// --- Section Management ---
 function showSection(id) {
-  const currentActiveSection = document.querySelector('.section.active');
-  if (currentActiveSection && currentActiveSection.id) {
-      // 1. SAVE SCROLL of the section we are leaving
-      saveScrollPosition(currentActiveSection.id);
-  }
-  
   console.log(`showSection called for: ${id}`);
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -298,10 +154,8 @@ function showSection(id) {
 
   document.querySelectorAll('.search-container').forEach(sc => sc.style.display = 'none');
   document.querySelectorAll('.genre-buttons').forEach(gb => gb.style.display = 'none');
-  
-  if (id === 'home') {
-    renderHomeSection(); // Render the dynamic content
-  } else if (id === 'series') {
+
+  if (id === 'series') {
     document.querySelector('#series .search-container').style.display = 'block';
     document.getElementById('seriesGenreButtons').style.display = 'flex';
     const savedQuery = localStorage.getItem('searchQuery_series') || '';
@@ -311,6 +165,7 @@ function showSection(id) {
       performSearch('series');
     } else {
       const activeGenreSeries = localStorage.getItem('activeGenre_series') || 'All';
+      console.log(`Series section active. Stored genre: ${activeGenreSeries}`);
       filterContentByGenre('series', activeGenreSeries);
     }
   } else if (id === 'movies') {
@@ -323,24 +178,22 @@ function showSection(id) {
       performSearch('movies');
     } else {
       const activeGenreMovies = localStorage.getItem('activeGenre_movies') || 'All';
+      console.log(`Movies section active. Stored genre: ${activeGenreMovies}`);
       filterContentByGenre('movies', activeGenreMovies);
     }
   } else if (id === 'watchLater') {
     showWatchLater();
+  } else if (id === 'home') {
+    // Initialize home section when shown
+    initializeHomeSection();
   }
-  
-  // 2. RESTORE SCROLL for the section we just entered
-  restoreScrollPosition(id);
 }
 
-
-// ----------------------------------------------------
-// VIII. Search & Filter Functionality
-// ----------------------------------------------------
-
+// --- Search Functionality ---
 function performSearch(type) {
   const inputElement = document.getElementById(type === 'series' ? 'seriesSearch' : 'movieSearch');
   const query = inputElement.value.toLowerCase().trim();
+  console.log(`Performing search for ${type} with query: "${query}"`);
 
   hideSuggestions(type);
 
@@ -358,12 +211,18 @@ function performSearch(type) {
   });
 
   localStorage.setItem(`activeGenre_${type}`, 'All');
+  console.log(`Search performed, activeGenre_${type} set to 'All'.`);
   renderGenreButtons(type);
 
-  if (type === 'series') {
-    showSeriesList(filtered, query);
+  const listContainer = document.getElementById(type === 'series' ? 'seriesList' : 'movieList');
+  if (filtered.length === 0 && query !== '') {
+    listContainer.innerHTML = `<p style="text-align: center; color: #aaa; margin-top: 2rem;">No results found for "${query}".</p>`;
   } else {
-    showMovieList(filtered, query);
+    if (type === 'series') {
+      showSeriesList(filtered, query);
+    } else {
+      showMovieList(filtered, query);
+    }
   }
 }
 
@@ -387,6 +246,7 @@ function handleSearchInputForSuggestions(type) {
   }
 }
 
+// --- Search Suggestions ---
 function showSuggestions(type, query) {
   const suggestionsContainer = document.getElementById(type === 'series' ? 'seriesSuggestions' : 'movieSuggestions');
   suggestionsContainer.innerHTML = '';
@@ -428,6 +288,7 @@ function hideSuggestions(type) {
   suggestionsContainer.classList.remove('active');
 }
 
+// --- Genre Filtering ---
 function getUniqueGenres(type) {
   const allGenres = content[type].flatMap(item => item.genres || []);
   return ['All', ...new Set(allGenres)].sort();
@@ -441,6 +302,7 @@ function renderGenreButtons(type) {
   container.innerHTML = '';
   const genres = getUniqueGenres(type);
   const activeGenre = localStorage.getItem(`activeGenre_${type}`) || 'All';
+  console.log(`Rendering genre buttons for ${type}. Active genre from storage: ${activeGenre}`);
 
   genres.forEach(genre => {
     const button = document.createElement('button');
@@ -454,6 +316,7 @@ function renderGenreButtons(type) {
 }
 
 function filterContentByGenre(type, genre) {
+  console.log(`filterContentByGenre called for ${type} with genre: ${genre}`);
   const genreButtonsContainerId = type === 'series' ? 'seriesGenreButtons' : 'movieGenreButtons';
   const buttons = document.getElementById(genreButtonsContainerId).querySelectorAll('button');
 
@@ -472,44 +335,47 @@ function filterContentByGenre(type, genre) {
     document.getElementById('seriesSearch').value = '';
     hideSuggestions('series');
     localStorage.removeItem('searchQuery_series');
-    showSeriesList(filteredList);
   } else if (type === 'movies') {
     document.getElementById('movieSearch').value = '';
     hideSuggestions('movies');
     localStorage.removeItem('searchQuery_movies');
+  }
+
+  if (type === 'series') {
+    showSeriesList(filteredList);
+  } else {
     showMovieList(filteredList);
   }
 
   localStorage.setItem(`activeGenre_${type}`, genre);
+  console.log(`activeGenre_${type} saved as: ${genre}`);
 }
 
-
-// ----------------------------------------------------
-// IX. Display List Functions
-// ----------------------------------------------------
-
+// --- Display List Functions ---
 function showSeriesList(list = null, query = '') {
   const currentList = list || content.series;
   const container = document.getElementById('seriesList');
   container.innerHTML = '';
 
   const activeGenre = localStorage.getItem('activeGenre_series');
+  console.log(`showSeriesList called. Active series genre: ${activeGenre}. Query: "${query}"`);
 
   const displayList = (list === null && activeGenre && activeGenre !== 'All') ?
     currentList.filter(s => s.genres && s.genres.includes(activeGenre)) :
     currentList;
 
-  if (displayList.length === 0) {
-    const message = (query !== '') ? `No results found for "${query}".` : `No items to display here.`;
-    container.innerHTML = `<p style="text-align: center; color: #aaa; margin-top: 2rem;">${message}</p>`;
+  if (displayList.length === 0 && query !== '') {
+    container.innerHTML = `<p style="text-align: center; color: #aaa; margin-top: 2rem;">No results found for "${query}".</p>`;
+    return;
+  } else if (displayList.length === 0 && (list === null || query === '')) {
+    container.innerHTML = `<p style="text-align: center; color: #aaa; margin-top: 2rem;">No items to display here.</p>`;
     return;
   }
 
   displayList.forEach((s) => {
     const div = document.createElement('div');
     div.className = 'series-item';
-    // Find the current index to ensure detail link works correctly
-    const originalIndex = content.series.findIndex(item => item.id === s.id);
+    const originalIndex = content.series.findIndex(item => item.title === s.title);
     if (originalIndex === -1) return;
 
     const highlightedTitle = query ? s.title.replace(new RegExp(query, 'gi'), match => `<span style="background-color: #5a9bd8; color: #121212; border-radius: 3px; padding: 0 2px;">${match}</span>`) : s.title;
@@ -530,21 +396,24 @@ function showMovieList(list = null, query = '') {
   container.innerHTML = '';
 
   const activeGenre = localStorage.getItem('activeGenre_movies');
+  console.log(`showMovieList called. Active movie genre: ${activeGenre}. Query: "${query}"`);
 
   const displayList = (list === null && activeGenre && activeGenre !== 'All') ?
     currentList.filter(m => m.genres && m.genres.includes(activeGenre)) :
     currentList;
 
-  if (displayList.length === 0) {
-    const message = (query !== '') ? `No results found for "${query}".` : `No items to display here.`;
-    container.innerHTML = `<p style="text-align: center; color: #aaa; margin-top: 2rem;">${message}</p>`;
+  if (displayList.length === 0 && query !== '') {
+    container.innerHTML = `<p style="text-align: center; color: #aaa; margin-top: 2rem; justify-content:center; font-size:1.5rem;">No results found for "${query}".</p>`;
+    return;
+  } else if (displayList.length === 0 && (list === null || query === '')) {
+    container.innerHTML = `<p style="text-align: center; color: #aaa; margin-top: 2rem;">No items to display here.</p>`;
     return;
   }
 
   displayList.forEach((m) => {
     const div = document.createElement('div');
     div.className = 'series-item';
-    const originalIndex = content.movies.findIndex(item => item.id === m.id);
+    const originalIndex = content.movies.findIndex(item => item.title === m.title);
     if (originalIndex === -1) return;
 
     const highlightedTitle = query ? m.title.replace(new RegExp(query, 'gi'), match => `<span style="background-color: #5a9bd8; color: #121212; border-radius: 3px; padding: 0 2px;">${match}</span>`) : m.title;
@@ -559,10 +428,60 @@ function showMovieList(list = null, query = '') {
   });
 }
 
+// --- Share Functionality ---
+function generateShareLink(type, index) {
+  const baseUrl = window.location.origin + window.location.pathname;
+  return `${baseUrl}?type=${type}&id=${index}`;
+}
 
-// ----------------------------------------------------
-// X. Detail View & Navigation
-// ----------------------------------------------------
+async function shareContent(type, index) {
+  const item = type === 'series' ? content.series[index] : content.movies[index];
+  if (!item) {
+    console.error('Item not found for sharing:', type, index);
+    alert('Could not find item to share.');
+    return;
+  }
+
+  const shareUrl = generateShareLink(type, index);
+  const shareData = {
+    title: `Stream ${item.title} on BayWatch!`,
+    text: item.description ? `"${item.description}"` : '',
+    url: shareUrl,
+  };
+
+  console.log("Attempting to share:", shareData);
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      console.log('Content shared successfully via Web Share API!');
+    } else {
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareData.title + '\n' + shareData.text + '\n' + shareData.url)}`;
+      window.open(whatsappUrl, '_blank');
+      console.log('Opened WhatsApp for sharing.');
+    }
+  } catch (error) {
+    console.error('Error sharing content:', error);
+    if (error.name !== 'AbortError') {
+      alert('Failed to share. Please try again or copy the link directly.');
+    }
+  }
+}
+
+function copyLinkToClipboard(type, index) {
+  const shareUrl = generateShareLink(type, index);
+  navigator.clipboard.writeText(shareUrl)
+    .then(() => {
+      alert('Link copied to clipboard!');
+      console.log('Link copied:', shareUrl);
+    })
+    .catch(err => {
+      console.error('Failed to copy link:', err);
+      alert('Failed to copy link. Please try again.');
+    });
+}
+
+// --- Detail View Functions ---
 
 // NEW: Helper function to save scroll position before showing details
 function saveScrollAndShowDetails(type, index) {
@@ -577,11 +496,11 @@ function saveScrollAndShowDetails(type, index) {
 }
 
 function showSeriesDetails(i, originSection = null) {
+  console.log(`showSeriesDetails called for index: ${i}, origin: ${originSection}`);
   const s = content.series[i];
   if (!s) {
     console.error("Error: Series item not found at index:", i);
-    // Use custom modal or message box instead of alert()
-    // alert("Could not load series details. Data might be missing or corrupted."); 
+    alert("Could not load series details. Data might be missing or corrupted.");
     showSection(originSection === 'watchLater' ? 'watchLater' : 'series');
     return;
   }
@@ -605,16 +524,13 @@ function showSeriesDetails(i, originSection = null) {
           ${s.episodes.map((ep, epIndex) => {
     const isEpisodeWatched = isWatched('series', `${i}_${epIndex}`);
     const buttonClass = isEpisodeWatched ? 'watched-episode-btn' : '';
-    // Escape single quotes in episode title for safe use in onclick
-    const safeTitle = ep.title.replace(/'/g, "\\'"); 
-    return `<button onclick="playEpisode('${ep.link}', '${safeTitle}', 'series', '${i}_${epIndex}')" class="${buttonClass}">${ep.title}</button>`;
+    return `<button onclick="playEpisode('${ep.link}', '${ep.title.replace(/'/g, "\\'")}', 'series', '${i}_${epIndex}')" class="${buttonClass}">${ep.title}</button>`;
   }).join('')}
         </div>
         <div class="detail-bottom-actions">
-            <button onclick="shareContent('series', ${i})" class="back">Share</button>
-            <button onclick="goBackToList('series')" class="back">Back</button>
-            <button onclick="copyLinkToClipboard('series', ${i})" class="back">Link</button> 
-        </div>
+<button onclick="shareContent('series', ${i})" class="back">Share</button>
+ <button onclick="goBackToList('series')" class="back">Back</button>
+             <button onclick="copyLinkToClipboard('series', ${i})" class="back">Link</button> </div>
       `;
 
   saveState('series', 'series', i, originSection);
@@ -622,9 +538,11 @@ function showSeriesDetails(i, originSection = null) {
 }
 
 function showMovieDetails(i, originSection = null) {
+  console.log(`showMovieDetails called for index: ${i}, origin: ${originSection}`);
   const m = content.movies[i];
   if (!m) {
     console.error("Error: Movie item not found at index:", i);
+    alert("Could not load movie details. Data might be missing or corrupted.");
     showSection(originSection === 'watchLater' ? 'watchLater' : 'movies');
     return;
   }
@@ -643,27 +561,32 @@ function showMovieDetails(i, originSection = null) {
   const isMovieWatched = isWatched('movie', i);
   const buttonClass = isMovieWatched ? 'watched-episode-btn' : '';
 
-  // Escape single quotes in movie title for safe use in onclick
-  const safeTitle = m.title.replace(/'/g, "\\'"); 
-
   container.innerHTML = `
         <img src="${m.image}" alt="${m.title}" />
         <h2>${m.title}</h2>
         <p>${m.description}</p>
         <div class="episode-buttons">
-          <button onclick="playEpisode('${m.link}', '${safeTitle}', 'movie', ${i})" class="${buttonClass}">Watch Now</button>
+          <button onclick="playEpisode('${m.link}', '${m.title.replace(/'/g, "\\'")}', 'movie', ${i})" class="${buttonClass}">Watch Now</button>
         </div>
         <div class="detail-bottom-actions">
-            <button onclick="shareContent('movie', ${i})" class="back">Share</button>
-            <button onclick="goBackToList('movies')" class="back">Back</button>
-            <button onclick="copyLinkToClipboard('movie', ${i})" class="back">Link</button> 
-        </div>
+<button onclick="shareContent('movie', ${i})" class="back">Share</button>
+ <button onclick="goBackToList('movies')" class="back">Back</button>
+             <button onclick="copyLinkToClipboard('movie', ${i})" class="back">Link</button> </div>
       `;
   saveState('movies', 'movie', i, originSection);
   window.scrollTo(0, 0);
 }
 
+function formatTime(seconds) {
+  if (!seconds) return "0:00";
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
 function goBackToList(type) {
+  console.log(`goBackToList called for: ${type}`);
+
   if (type === 'series') {
     document.getElementById('seriesDetails').style.display = 'none';
   } else {
@@ -671,16 +594,17 @@ function goBackToList(type) {
   }
 
   const originSection = localStorage.getItem('originSection');
-  let targetSectionId = originSection === 'watchLater' ? 'watchLater' : type;
 
-  // showSection handles the content list rendering and scroll restoration
+  let targetSectionId = originSection === 'watchLater' ? 'watchLater' : type;
   showSection(targetSectionId);
+
+  // Use requestAnimationFrame for a smoother, more reliable scroll
+  requestAnimationFrame(() => {
+    restoreScrollPosition(targetSectionId);
+  });
 }
 
-// ----------------------------------------------------
-// XI. Watch Later Functionality
-// ----------------------------------------------------
-
+// --- Watch Later Functionality ---
 function getWatchLaterList() {
   const watchLaterJson = localStorage.getItem('watchLater');
   return watchLaterJson ? JSON.parse(watchLaterJson) : [];
@@ -693,42 +617,38 @@ function saveWatchLaterList(list) {
 function addToWatchLater(type, index) {
   const item = type === 'series' ? content.series[index] : content.movies[index];
   const watchLaterList = getWatchLaterList();
-  const itemId = `${type}-${item.id}`; // Use the item ID for reliable uniqueness
+  const itemId = `${type}-${index}`;
 
   const isAlreadyAdded = watchLaterList.some(
     (wlItem) => wlItem.uniqueId === itemId
   );
 
   if (!isAlreadyAdded) {
-    // Store necessary data: unique ID, type, and the original index in the main list
     watchLaterList.push({ uniqueId: itemId, type: type, originalIndex: index, itemData: item });
     saveWatchLaterList(watchLaterList);
-    console.log(`${item.title} added to Watch Later!`);
+    alert(`${item.title} added to Watch Later!`);
   } else {
-    console.log(`${item.title} is already in your Watch Later list.`);
+    alert(`${item.title} is already in your Watch Later list.`);
   }
 }
 
 function removeFromWatchLater(type, originalIndex) {
   let watchLaterList = getWatchLaterList();
-  const item = type === 'series' ? content.series[originalIndex] : content.movies[originalIndex];
-  if (!item) return;
-
   const initialLength = watchLaterList.length;
-  const itemIdToRemove = `${type}-${item.id}`;
-
+  const itemIdToRemove = `${type}-${originalIndex}`;
   watchLaterList = watchLaterList.filter(
     (wlItem) => wlItem.uniqueId !== itemIdToRemove
   );
 
   if (watchLaterList.length < initialLength) {
     saveWatchLaterList(watchLaterList);
-    console.log('Item removed from Watch Later!');
+    alert('Item removed from Watch Later!');
     showWatchLater();
   }
 }
 
 function showWatchLater() {
+  console.log('showWatchLater called');
   document.querySelectorAll('.search-container').forEach(sc => sc.style.display = 'none');
   document.querySelectorAll('.genre-buttons').forEach(gb => gb.style.display = 'none');
   document.querySelector('nav').style.display = 'flex';
@@ -768,68 +688,15 @@ function showWatchLater() {
   restoreScrollPosition('watchLater');
 }
 
-
-// ----------------------------------------------------
-// XII. Share Functionality (Unchanged)
-// ----------------------------------------------------
-function generateShareLink(type, index) {
-  const baseUrl = window.location.origin + window.location.pathname;
-  return `${baseUrl}?type=${type}&id=${index}`;
-}
-
-async function shareContent(type, index) {
-  const item = type === 'series' ? content.series[index] : content.movies[index];
-  if (!item) {
-    console.error('Item not found for sharing:', type, index);
-    return;
-  }
-
-  const shareUrl = generateShareLink(type, index);
-  const shareData = {
-    title: `Stream ${item.title} on BayWatch!`,
-    text: item.description ? `"${item.description}"` : '',
-    url: shareUrl,
-  };
-
-  try {
-    if (navigator.share) {
-      await navigator.share(shareData);
-    } else {
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareData.title + '\n' + shareData.text + '\n' + shareData.url)}`;
-      window.open(whatsappUrl, '_blank');
-    }
-  } catch (error) {
-    console.error('Error sharing content:', error);
-  }
-}
-
-function copyLinkToClipboard(type, index) {
-  const shareUrl = generateShareLink(type, index);
-  // Using document.execCommand('copy') for better compatibility in limited environments
-  const tempInput = document.createElement('input');
-  tempInput.value = shareUrl;
-  document.body.appendChild(tempInput);
-  tempInput.select();
-  try {
-    document.execCommand('copy');
-    console.log('Link copied:', shareUrl);
-  } catch (err) {
-    console.error('Failed to copy link:', err);
-  }
-  document.body.removeChild(tempInput);
-}
-
-
-// ----------------------------------------------------
-// XIII. Initialization
-// ----------------------------------------------------
-
+// --- Initialize on DOM Content Loaded ---
 document.addEventListener('DOMContentLoaded', function() {
-  // Sort content alphabetically once on load
+  console.log('DOM Content Loaded. Initializing...');
+
   content.series.sort((a, b) => a.title.localeCompare(b.title));
   content.movies.sort((a, b) => a.title.localeCompare(b.title));
 
-  // --- URL Parameter Handling for Direct Links ---
+  console.log("Content has been sorted alphabetically.");
+
   const urlParams = new URLSearchParams(window.location.search);
   const paramType = urlParams.get('type');
   const paramId = urlParams.get('id');
@@ -837,42 +704,52 @@ document.addEventListener('DOMContentLoaded', function() {
   if (paramType && paramId !== null) {
     const id = parseInt(paramId, 10);
     if (!isNaN(id)) {
-      localStorage.clear(); // Clear local state for direct link entry
+      console.log(`Direct link detected: type=${paramType}, id=${id}`);
+      localStorage.removeItem('lastActiveSection');
+      localStorage.removeItem('lastDetailType');
+      localStorage.removeItem('lastDetailIndex');
+      localStorage.removeItem('originSection');
+
       if (paramType === 'series' && content.series[id]) {
         showSeriesDetails(id);
       } else if (paramType === 'movie' && content.movies[id]) {
         showMovieDetails(id);
       } else {
+        console.warn('Direct link item not found or invalid type. Loading home.');
         showSection('home');
       }
     } else {
+      console.warn('Invalid ID in direct link. Loading home.');
       showSection('home');
     }
   } else {
-    // --- State Restoration (Scroll Fix applied via showSection) ---
     const lastActiveSection = localStorage.getItem('lastActiveSection');
     const lastDetailType = localStorage.getItem('lastDetailType');
     const lastDetailIndex = localStorage.getItem('lastDetailIndex');
     const originSection = localStorage.getItem('originSection');
 
     if (lastActiveSection) {
+      console.log(`Restoring last active section: ${lastActiveSection}`);
       if (lastDetailType && lastDetailIndex !== null) {
+        console.log(`Restoring detail view: ${lastDetailType} at index ${lastDetailIndex}`);
+        document.querySelector('nav').style.display = 'none';
+        document.querySelectorAll('.search-container').forEach(sc => sc.style.display = 'none');
+        document.querySelectorAll('.genre-buttons').forEach(gb => gb.style.display = 'none');
+
         if (lastDetailType === 'series') {
           showSeriesDetails(parseInt(lastDetailIndex, 10), originSection);
         } else if (lastDetailType === 'movie') {
           showMovieDetails(parseInt(lastDetailIndex, 10), originSection);
         }
       } else {
-        // This calls showSection, which handles rendering and scroll restoration
-        showSection(lastActiveSection); 
+        showSection(lastActiveSection);
       }
     } else {
-      // Default entry point
+      console.log('No last active section found. Defaulting to "home".');
       showSection('home');
     }
   }
 
-  // --- Input Event Listeners ---
   renderGenreButtons('series');
   renderGenreButtons('movies');
 
@@ -880,12 +757,17 @@ document.addEventListener('DOMContentLoaded', function() {
   if (seriesSearchInput) {
     seriesSearchInput.addEventListener('input', () => handleSearchInputForSuggestions('series'));
     seriesSearchInput.addEventListener('keypress', (event) => {
-      if (event.key === 'Enter') { event.preventDefault(); searchContent('series'); }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        searchContent('series');
+      }
     });
     seriesSearchInput.addEventListener('blur', () => setTimeout(() => hideSuggestions('series'), 100));
     seriesSearchInput.addEventListener('focus', (event) => {
       const query = event.target.value.toLowerCase().trim();
-      if (query.length > 0) { showSuggestions('series', query); }
+      if (query.length > 0) {
+        showSuggestions('series', query);
+      }
     });
   }
 
@@ -893,12 +775,17 @@ document.addEventListener('DOMContentLoaded', function() {
   if (movieSearchInput) {
     movieSearchInput.addEventListener('input', () => handleSearchInputForSuggestions('movies'));
     movieSearchInput.addEventListener('keypress', (event) => {
-      if (event.key === 'Enter') { event.preventDefault(); searchContent('movies'); }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        searchContent('movies');
+      }
     });
     movieSearchInput.addEventListener('blur', () => setTimeout(() => hideSuggestions('movies'), 100));
     movieSearchInput.addEventListener('focus', (event) => {
       const query = event.target.value.toLowerCase().trim();
-      if (query.length > 0) { showSuggestions('movies', query); }
+      if (query.length > 0) {
+        showSuggestions('movies', query);
+      }
     });
   }
 });
