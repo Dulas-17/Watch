@@ -64,10 +64,57 @@ let suggestionDebounceTimeout;
 let currentPlayingType = null;
 let currentPlayingIndex = null;
 let scrollPosition = {}; // New global object to store scroll positions
+let scrollSaveTimeout = null;
+
+// --- Scroll Position Management ---
+function saveScrollPosition(sectionId) {
+  // Clear any pending scroll save
+  if (scrollSaveTimeout) {
+    clearTimeout(scrollSaveTimeout);
+  }
+  
+  // Debounce scroll saving to improve performance
+  scrollSaveTimeout = setTimeout(() => {
+    scrollPosition[sectionId] = window.scrollY;
+    localStorage.setItem(`scrollPosition_${sectionId}`, window.scrollY);
+    console.log(`Saved scroll for ${sectionId}: ${window.scrollY}`);
+  }, 100);
+}
+
+function restoreScrollPosition(sectionId) {
+  // Wait for DOM to be fully rendered
+  setTimeout(() => {
+    const storedScrollY = localStorage.getItem(`scrollPosition_${sectionId}`);
+    if (storedScrollY !== null && storedScrollY !== 'undefined') {
+      const scrollY = parseInt(storedScrollY, 10);
+      if (!isNaN(scrollY) && scrollY > 0) {
+        window.scrollTo(0, scrollY);
+        console.log(`Restored scroll for ${sectionId}: ${scrollY}`);
+      }
+    }
+  }, 50);
+}
+
+// Add scroll event listener for automatic scroll saving
+window.addEventListener('scroll', () => {
+  const activeSection = document.querySelector('.section.active');
+  if (activeSection) {
+    const sectionId = activeSection.id;
+    if (sectionId && sectionId !== 'seriesDetails' && sectionId !== 'movieDetails') {
+      saveScrollPosition(sectionId);
+    }
+  }
+});
 
 // --- Video Playback & Tracking ---
 
 function playEpisode(link, episodeTitle = null, type, index) {
+  // Save current scroll position before opening video
+  const activeSection = document.querySelector('.section.active');
+  if (activeSection) {
+    saveScrollPosition(activeSection.id);
+  }
+
   const player = document.getElementById('videoFullScreen');
   const iframe = player.querySelector('iframe');
 
@@ -88,27 +135,18 @@ function closeFullScreen() {
 
   iframe.src = '';
   player.style.display = 'none';
-  restoreScrollPosition(localStorage.getItem('lastActiveSection'));
+
+  // Restore scroll position after video closes
+  const lastSection = localStorage.getItem('lastActiveSection');
+  if (lastSection) {
+    restoreScrollPosition(lastSection);
+  }
 
   currentPlayingType = null;
   currentPlayingIndex = null;
 }
 
 // --- Local Storage Utilities ---
-function saveScrollPosition(sectionId) {
-  scrollPosition[sectionId] = window.scrollY;
-  localStorage.setItem(`scrollPosition_${sectionId}`, window.scrollY);
-  console.log(`Saved scroll for ${sectionId}: ${window.scrollY}`);
-}
-
-function restoreScrollPosition(sectionId) {
-  const storedScrollY = localStorage.getItem(`scrollPosition_${sectionId}`);
-  if (storedScrollY) {
-    window.scrollTo(0, parseInt(storedScrollY, 10));
-    console.log(`Restored scroll for ${sectionId}: ${storedScrollY}`);
-  }
-}
-
 function saveState(sectionId, detailType = null, detailIndex = null, originSection = null) {
   console.log(`saveState called: sectionId=${sectionId}, detailType=${detailType}, detailIndex=${detailIndex}, originSection=${originSection}`);
   localStorage.setItem('lastActiveSection', sectionId);
@@ -143,6 +181,13 @@ function isWatched(type, index) {
 // --- Section Management ---
 function showSection(id) {
   console.log(`showSection called for: ${id}`);
+  
+  // Save scroll position of current section before switching
+  const currentSection = document.querySelector('.section.active');
+  if (currentSection) {
+    saveScrollPosition(currentSection.id);
+  }
+
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 
@@ -168,6 +213,8 @@ function showSection(id) {
       console.log(`Series section active. Stored genre: ${activeGenreSeries}`);
       filterContentByGenre('series', activeGenreSeries);
     }
+    // Restore scroll position for series section
+    setTimeout(() => restoreScrollPosition('series'), 100);
   } else if (id === 'movies') {
     document.querySelector('#movies .search-container').style.display = 'block';
     document.getElementById('movieGenreButtons').style.display = 'flex';
@@ -181,11 +228,17 @@ function showSection(id) {
       console.log(`Movies section active. Stored genre: ${activeGenreMovies}`);
       filterContentByGenre('movies', activeGenreMovies);
     }
+    // Restore scroll position for movies section
+    setTimeout(() => restoreScrollPosition('movies'), 100);
   } else if (id === 'watchLater') {
     showWatchLater();
+    // Restore scroll position for watch later section
+    setTimeout(() => restoreScrollPosition('watchLater'), 100);
   } else if (id === 'home') {
     // Initialize home section when shown
     initializeHomeSection();
+    // Restore scroll position for home section
+    setTimeout(() => restoreScrollPosition('home'), 100);
   }
 }
 
