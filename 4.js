@@ -1,9 +1,47 @@
 // Home Section Logic
 // This file handles the home section functionality
 
+// Track recently added items with timestamps
+function initializeRecentlyAddedTracking() {
+    // Initialize if not exists
+    if (!localStorage.getItem('recentlyAdded')) {
+        localStorage.setItem('recentlyAdded', JSON.stringify({
+            movies: [],
+            series: []
+        }));
+    }
+}
+
+// Add item to recently added when it's first loaded
+function trackNewItem(type, index) {
+    const item = type === 'series' ? content.series[index] : content.movies[index];
+    const recentlyAdded = JSON.parse(localStorage.getItem('recentlyAdded') || '{"movies":[],"series":[]}');
+    
+    const itemId = `${type}-${index}`;
+    const timestamp = new Date().toISOString();
+    
+    // Remove if already exists
+    recentlyAdded[type] = recentlyAdded[type].filter(item => item.id !== itemId);
+    
+    // Add to beginning (most recent first)
+    recentlyAdded[type].unshift({
+        id: itemId,
+        type: type,
+        index: index,
+        timestamp: timestamp,
+        title: item.title
+    });
+    
+    // Keep only last 10 items per type
+    recentlyAdded[type] = recentlyAdded[type].slice(0, 10);
+    
+    localStorage.setItem('recentlyAdded', JSON.stringify(recentlyAdded));
+}
+
 // Initialize home section
 function initializeHomeSection() {
     console.log("Initializing home section...");
+    initializeRecentlyAddedTracking();
     updateHomeContent();
     
     // Add scroll tracking for home section
@@ -29,40 +67,143 @@ function updateHomeContent() {
     updateLatestSeries();
     updateFeaturedContent();
     updateRecentlyAdded();
+    updateRecommendations();
 }
 
-// Get latest movies (last 6 added)
+// Get latest movies (based on tracking, not array position)
 function getLatestMovies() {
-    return content.movies.slice(-6).reverse();
+    const recentlyAdded = JSON.parse(localStorage.getItem('recentlyAdded') || '{"movies":[],"series":[]}');
+    const recentMovies = recentlyAdded.movies.slice(0, 6); // Get 6 most recent movies
+    
+    return recentMovies.map(entry => {
+        const movie = content.movies[entry.index];
+        return {
+            ...movie,
+            trackedIndex: entry.index,
+            addedDate: entry.timestamp
+        };
+    }).filter(movie => movie !== undefined); // Filter out undefined entries
 }
 
-// Get latest series (last 6 added)
+// Get latest series (based on tracking, not array position)
 function getLatestSeries() {
-    return content.series.slice(-6).reverse();
+    const recentlyAdded = JSON.parse(localStorage.getItem('recentlyAdded') || '{"movies":[],"series":[]}');
+    const recentSeries = recentlyAdded.series.slice(0, 6); // Get 6 most recent series
+    
+    return recentSeries.map(entry => {
+        const series = content.series[entry.index];
+        return {
+            ...series,
+            trackedIndex: entry.index,
+            addedDate: entry.timestamp
+        };
+    }).filter(series => series !== undefined); // Filter out undefined entries
 }
 
 // Get featured content (mix of popular movies and series)
 function getFeaturedContent() {
-    const featuredMovies = content.movies.filter(movie => 
-        movie.featured || movie.rating > 4
-    ).slice(0, 3);
+    // You can manually set featured items here or use some criteria
+    const featuredItems = [];
     
-    const featuredSeries = content.series.filter(series => 
-        series.featured || series.rating > 4
-    ).slice(0, 3);
+    // Example: First 2 movies and first 2 series as featured
+    if (content.movies.length > 0) {
+        featuredItems.push({
+            ...content.movies[0],
+            type: 'movie',
+            trackedIndex: 0
+        });
+    }
+    if (content.movies.length > 1) {
+        featuredItems.push({
+            ...content.movies[1],
+            type: 'movie',
+            trackedIndex: 1
+        });
+    }
+    if (content.series.length > 0) {
+        featuredItems.push({
+            ...content.series[0],
+            type: 'series',
+            trackedIndex: 0
+        });
+    }
+    if (content.series.length > 1) {
+        featuredItems.push({
+            ...content.series[1],
+            type: 'series',
+            trackedIndex: 1
+        });
+    }
     
-    return [...featuredMovies, ...featuredSeries].sort(() => Math.random() - 0.5).slice(0, 6);
+    return featuredItems.slice(0, 6);
 }
 
-// Get recently added content (last 8 items from both movies and series)
+// Get recently added content (all recent items mixed)
 function getRecentlyAdded() {
-    const recentMovies = content.movies.slice(-4).reverse();
-    const recentSeries = content.series.slice(-4).reverse();
+    const recentlyAdded = JSON.parse(localStorage.getItem('recentlyAdded') || '{"movies":[],"series":[]}');
     
-    return [...recentMovies, ...recentSeries].sort((a, b) => {
-        // Simple timestamp simulation - in real app, you'd have actual timestamps
-        return Math.random() - 0.5;
-    }).slice(0, 8);
+    // Combine movies and series, sort by timestamp
+    const allRecent = [
+        ...recentlyAdded.movies.map(entry => ({...entry, itemType: 'movie'})),
+        ...recentlyAdded.series.map(entry => ({...entry, itemType: 'series'}))
+    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 8);
+    
+    return allRecent.map(entry => {
+        const item = entry.itemType === 'series' ? content.series[entry.index] : content.movies[entry.index];
+        return {
+            ...item,
+            type: entry.itemType,
+            trackedIndex: entry.index,
+            addedDate: entry.timestamp
+        };
+    }).filter(item => item !== undefined);
+}
+
+// Get recommendations (based on watch history or random popular items)
+function getRecommendations() {
+    const recommendations = [];
+    
+    // Get some random popular items (you can customize this logic)
+    const popularMovies = content.movies.filter(movie => movie.rating > 4 || movie.featured);
+    const popularSeries = content.series.filter(series => series.rating > 4 || series.featured);
+    
+    // Add 2 popular movies
+    if (popularMovies.length > 0) {
+        recommendations.push({
+            ...popularMovies[0],
+            type: 'movie',
+            trackedIndex: content.movies.findIndex(m => m.title === popularMovies[0].title),
+            reason: 'Highly Rated'
+        });
+    }
+    if (popularMovies.length > 1) {
+        recommendations.push({
+            ...popularMovies[1],
+            type: 'movie',
+            trackedIndex: content.movies.findIndex(m => m.title === popularMovies[1].title),
+            reason: 'Popular Choice'
+        });
+    }
+    
+    // Add 2 popular series
+    if (popularSeries.length > 0) {
+        recommendations.push({
+            ...popularSeries[0],
+            type: 'series',
+            trackedIndex: content.series.findIndex(s => s.title === popularSeries[0].title),
+            reason: 'Fan Favorite'
+        });
+    }
+    if (popularSeries.length > 1) {
+        recommendations.push({
+            ...popularSeries[1],
+            type: 'series',
+            trackedIndex: content.series.findIndex(s => s.title === popularSeries[1].title),
+            reason: 'Trending Now'
+        });
+    }
+    
+    return recommendations;
 }
 
 // Update latest movies section
@@ -73,13 +214,12 @@ function updateLatestMovies() {
     container.innerHTML = '';
     
     if (latestMovies.length === 0) {
-        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No movies available yet.</p>';
+        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No recent movies yet.</p>';
         return;
     }
     
-    latestMovies.forEach((movie, index) => {
-        const originalIndex = content.movies.findIndex(m => m.title === movie.title);
-        const movieElement = createHomeItem(movie, 'movie', originalIndex);
+    latestMovies.forEach((movie) => {
+        const movieElement = createHomeItem(movie, 'movie', movie.trackedIndex);
         container.appendChild(movieElement);
     });
 }
@@ -92,13 +232,12 @@ function updateLatestSeries() {
     container.innerHTML = '';
     
     if (latestSeries.length === 0) {
-        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No series available yet.</p>';
+        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No recent series yet.</p>';
         return;
     }
     
-    latestSeries.forEach((series, index) => {
-        const originalIndex = content.series.findIndex(s => s.title === series.title);
-        const seriesElement = createHomeItem(series, 'series', originalIndex);
+    latestSeries.forEach((series) => {
+        const seriesElement = createHomeItem(series, 'series', series.trackedIndex);
         container.appendChild(seriesElement);
     });
 }
@@ -115,13 +254,8 @@ function updateFeaturedContent() {
         return;
     }
     
-    featuredItems.forEach((item, index) => {
-        const type = item.episodes ? 'series' : 'movie';
-        const originalIndex = type === 'series' ? 
-            content.series.findIndex(s => s.title === item.title) : 
-            content.movies.findIndex(m => m.title === item.title);
-        
-        const itemElement = createHomeItem(item, type, originalIndex, true);
+    featuredItems.forEach((item) => {
+        const itemElement = createHomeItem(item, item.type || 'movie', item.trackedIndex, true);
         container.appendChild(itemElement);
     });
 }
@@ -138,28 +272,47 @@ function updateRecentlyAdded() {
         return;
     }
     
-    recentItems.forEach((item, index) => {
-        const type = item.episodes ? 'series' : 'movie';
-        const originalIndex = type === 'series' ? 
-            content.series.findIndex(s => s.title === item.title) : 
-            content.movies.findIndex(m => m.title === item.title);
-        
-        const itemElement = createHomeItem(item, type, originalIndex);
+    recentItems.forEach((item) => {
+        const itemElement = createHomeItem(item, item.type, item.trackedIndex);
+        container.appendChild(itemElement);
+    });
+}
+
+// Update recommendations section
+function updateRecommendations() {
+    const container = document.getElementById('recommendations');
+    if (!container) return;
+    
+    const recommendations = getRecommendations();
+    
+    container.innerHTML = '';
+    
+    if (recommendations.length === 0) {
+        container.innerHTML = '<p style="padding: 1rem; color: #666; text-align: center;">No recommendations available.</p>';
+        return;
+    }
+    
+    recommendations.forEach((item) => {
+        const itemElement = createHomeItem(item, item.type, item.trackedIndex, false, item.reason);
         container.appendChild(itemElement);
     });
 }
 
 // Create home item element
-function createHomeItem(item, type, originalIndex, isFeatured = false) {
+function createHomeItem(item, type, originalIndex, isFeatured = false, recommendationReason = '') {
     const div = document.createElement('div');
     div.className = 'home-item';
     
     // Add featured badge if needed
     const featuredBadge = isFeatured ? '<span class="featured-badge">Featured</span>' : '';
     
+    // Add recommendation reason if provided
+    const recommendationBadge = recommendationReason ? `<span class="recommendation-badge">${recommendationReason}</span>` : '';
+    
     div.innerHTML = `
         <img src="${item.image}" alt="${item.title}" />
         ${featuredBadge}
+        ${recommendationBadge}
         <div class="home-item-content">
             <h4>${item.title}</h4>
             <p>${item.description ? item.description.substring(0, 60) + '...' : 'No description available'}</p>
@@ -173,6 +326,9 @@ function createHomeItem(item, type, originalIndex, isFeatured = false) {
 
 // Navigate to item details from home section
 function navigateFromHome(type, index) {
+    // Track this item as recently viewed
+    trackNewItem(type, index);
+    
     // Save current scroll position before navigating
     saveScrollPosition('home');
     
@@ -191,6 +347,15 @@ document.addEventListener('contentUpdated', function() {
     if (document.getElementById('home').classList.contains('active')) {
         updateHomeContent();
     }
+});
+
+// Initialize tracking for all existing content when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Track all existing content as "recently added" on first load
+    setTimeout(() => {
+        content.movies.forEach((_, index) => trackNewItem('movie', index));
+        content.series.forEach((_, index) => trackNewItem('series', index));
+    }, 1000);
 });
 
 // Simulate content update event (you would call this when adding new content)
