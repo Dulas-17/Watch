@@ -469,9 +469,9 @@
         <header style="margin-bottom:1.2rem;">
             <h1>
                 📦 DLS Encoder
-                <small>· Packer</small>
+                <small>· Packer + Compression</small>
             </h1>
-            <p class="subhead">Select files, optionally encrypt, and export each as a <strong>.dls</strong> container.</p>
+            <p class="subhead">Select files, optionally encrypt, compress (gzip), and export each as a <strong>.dls</strong> container.</p>
         </header>
 
         <div class="card">
@@ -523,7 +523,7 @@
         </div>
 
         <footer style="margin-top:1.5rem;font-size:0.75rem;color:var(--text-muted);text-align:center;border-top:1px solid var(--border);padding-top:1rem;">
-            DLS Encoder v2 · AES-256-CBC · PBKDF2 600k iterations · Secure & client-side
+            DLS Encoder v3 · AES-256-CBC · PBKDF2 600k · gzip compression · Client-side
         </footer>
     </div>
 
@@ -582,6 +582,39 @@
                     toast.classList.remove('show');
                     toastTimer = null;
                 }, duration);
+            }
+
+            // ─── Compression helpers ──────────────────────────────────
+            // Compress ArrayBuffer using gzip
+            async function compressData(arrayBuffer) {
+                if (!window.CompressionStream) {
+                    console.warn('CompressionStream not supported, storing uncompressed.');
+                    return arrayBuffer;
+                }
+                try {
+                    const blob = new Blob([arrayBuffer]);
+                    const stream = blob.stream().pipeThrough(new CompressionStream('gzip'));
+                    const compressedBlob = await new Response(stream).blob();
+                    return await compressedBlob.arrayBuffer();
+                } catch (e) {
+                    console.error('Compression failed, fallback to uncompressed.', e);
+                    return arrayBuffer;
+                }
+            }
+
+            // Decompress ArrayBuffer (used by decoder)
+            async function decompressData(arrayBuffer) {
+                if (!window.DecompressionStream) {
+                    throw new Error('DecompressionStream not supported');
+                }
+                try {
+                    const blob = new Blob([arrayBuffer]);
+                    const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+                    const decompressedBlob = await new Response(stream).blob();
+                    return await decompressedBlob.arrayBuffer();
+                } catch (e) {
+                    throw new Error('Decompression failed: ' + e.message);
+                }
             }
 
             // Chunked base64
@@ -823,7 +856,7 @@
                 );
             }
 
-            async function encryptFileData(dataArrayBuffer, password) {
+            async function encryptData(dataArrayBuffer, password) {
                 const salt = crypto.getRandomValues(new Uint8Array(16));
                 const iv = crypto.getRandomValues(new Uint8Array(16));
                 const key = await deriveKey(password, salt);
@@ -839,7 +872,21 @@
             }
 
             async function buildDLS(file, password) {
+                // 1. Read file
                 const arrayBuffer = await file.arrayBuffer();
+
+                // 2. Compress (if supported)
+                let compressedBuffer;
+                let compressed = false;
+                try {
+                    compressedBuffer = await compressData(arrayBuffer);
+                    compressed = true;
+                } catch (_) {
+                    compressedBuffer = arrayBuffer;
+                    compressed = false;
+                }
+
+                // 3. Prepare final payload
                 const useEncryption = password && password.length > 0;
 
                 let encrypted = false;
@@ -848,13 +895,13 @@
                 let data = '';
 
                 if (useEncryption) {
-                    const result = await encryptFileData(arrayBuffer, password);
+                    const result = await encryptData(compressedBuffer, password);
                     encrypted = true;
                     salt = result.salt;
                     iv = result.iv;
                     data = result.data;
                 } else {
-                    data = arrayBufferToBase64(arrayBuffer);
+                    data = arrayBufferToBase64(compressedBuffer);
                 }
 
                 return {
@@ -862,6 +909,7 @@
                     fileName: file.name,
                     fileType: file.type || 'application/octet-stream',
                     fileSize: file.size,
+                    compressed: compressed,
                     encrypted,
                     salt,
                     iv,
@@ -872,7 +920,7 @@
             // ─── Download helper ──────────────────────────────────────
             function downloadDLS(container, originalName) {
                 const json = JSON.stringify(container, null, 2);
-                const blob = new Blob([json], { type: 'application/octet-stream' }); // force .dls
+                const blob = new Blob([json], { type: 'application/octet-stream' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 const baseName = originalName.replace(/\.[^.]+$/, '') || originalName;
@@ -973,7 +1021,7 @@
             updateConvertButton();
             passwordInput.addEventListener('input', updateConvertButton);
 
-            console.log('📦 DLS Encoder v2 ready (PBKDF2 600k iterations)');
+            console.log('📦 DLS Encoder v3 ready (PBKDF2 600k iterations, gzip compression)');
         })();
     </script>
 </body>
