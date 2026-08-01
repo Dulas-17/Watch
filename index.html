@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DLS Encoder · Packer</title>
     <style>
+        /* ── compact, dark UI ── */
         *,
         *::before,
         *::after {
@@ -23,7 +24,6 @@
             --accent-hover: #79c0ff;
             --danger: #f85149;
             --success: #3fb950;
-            --warning: #d29922;
             --radius: 10px;
             --shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             --font: -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -48,18 +48,16 @@
         h1 {
             font-size: 1.7rem;
             font-weight: 600;
-            letter-spacing: -0.02em;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 0.2rem;
             flex-wrap: wrap;
+            margin-bottom: 0.2rem;
         }
         h1 small {
             font-size: 0.8rem;
             font-weight: 400;
             color: var(--text-muted);
-            margin-left: 0.3rem;
         }
         .subhead {
             color: var(--text-muted);
@@ -78,9 +76,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.8rem;
             flex-wrap: wrap;
             gap: 0.3rem;
+            margin-bottom: 0.8rem;
         }
         .card-header h2 {
             font-size: 1.1rem;
@@ -678,7 +676,7 @@
                     const size = formatSize(f.size);
                     const statusIcon = f._status === 'done' ? '✅' : f._status === 'error' ? '❌' : '';
                     const extraClass = f._status === 'done' ? ' done' : f._status === 'error' ? ' error-item' : '';
-                    // Truncate name: show up to 20 chars then ellipsis, but keep extension visible
+                    // Truncate name
                     let displayName = f.name;
                     if (displayName.length > 25) {
                         const extIdx = displayName.lastIndexOf('.');
@@ -690,7 +688,6 @@
                             displayName = displayName.slice(0, 22) + '…';
                         }
                     }
-                    // Download button if done and container exists
                     let downloadBtn = '';
                     if (f._status === 'done' && f._container) {
                         downloadBtn = `<button class="download-btn" data-download="${idx}" title="Download .dls">⬇️</button>`;
@@ -875,7 +872,7 @@
             // ─── Download helper ──────────────────────────────────────
             function downloadDLS(container, originalName) {
                 const json = JSON.stringify(container, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
+                const blob = new Blob([json], { type: 'application/octet-stream' }); // force .dls
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 const baseName = originalName.replace(/\.[^.]+$/, '') || originalName;
@@ -932,7 +929,7 @@
 
                     try {
                         const container = await buildDLS(file, pwd);
-                        file._container = container; // store for re-download
+                        file._container = container;
                         downloadDLS(container, file.name);
                         file._status = 'done';
                         successCount++;
