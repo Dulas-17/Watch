@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DLS Encoder · Packer</title>
     <style>
-        /* (same CSS as before – unchanged) */
+        /* (same CSS – unchanged) */
         *,
         *::before,
         *::after {
@@ -338,8 +338,8 @@
 
     <div class="container" id="app">
         <header style="margin-bottom:1.2rem;">
-            <h1>📦 DLS Encoder <small>· v6.3 – streaming JSON, no memory blow‑up</small></h1>
-            <p class="subhead">Convert large files (700+ MB) reliably using chunk‑by‑chunk JSON streaming.</p>
+            <h1>📦 DLS Encoder <small>· v6.4 – 512 MB chunks · .dls extension fixed</small></h1>
+            <p class="subhead">Convert even 700+ MB files reliably – no memory blow‑up, no .json extension.</p>
         </header>
 
         <div class="card">
@@ -379,7 +379,7 @@
         </div>
 
         <footer style="margin-top:1.5rem;font-size:0.75rem;color:var(--text-muted);text-align:center;border-top:1px solid var(--border);padding-top:1rem;">
-            DLS Encoder v6.3 · AES-256-CBC · PBKDF2 600k · dynamic chunks · streaming JSON · smart compression
+            DLS Encoder v6.4 · AES-256-CBC · PBKDF2 600k · up to 512 MB chunks · .dls extension
         </footer>
     </div>
 
@@ -500,9 +500,9 @@
                 return true;
             }
 
-            // ─── Dynamic chunk size ───────────────────────────────────
+            // ─── Dynamic chunk size (up to 512 MB) ────────────────────
             function getChunkSize(fileSize) {
-                if (fileSize > 500 * 1024 * 1024) return 256 * 1024 * 1024; // 256 MB
+                if (fileSize > 500 * 1024 * 1024) return 512 * 1024 * 1024; // 512 MB
                 if (fileSize > 200 * 1024 * 1024) return 128 * 1024 * 1024; // 128 MB
                 return 64 * 1024 * 1024; // 64 MB
             }
@@ -540,7 +540,7 @@
                 const chunkSize = getChunkSize(fileSize);
                 const compress = shouldCompress(file.type);
 
-                // 1. Metadata
+                // Metadata
                 const metaObj = { fileName: file.name, fileType: file.type || 'application/octet-stream', fileSize: file.size };
                 const metaJson = JSON.stringify(metaObj);
                 const metaBuffer = new TextEncoder().encode(metaJson).buffer;
@@ -556,7 +556,7 @@
                     metaData = arrayBufferToBase64(metaBuffer);
                 }
 
-                // Yield the prefix of the JSON container
+                // Prefix
                 const prefix = `{"version":"1.0","chunked":true,"chunkSize":${chunkSize},"encryptedMeta":${encryptedMeta ? 'true' : 'false'},"metaSalt":"${metaSalt}","metaIv":"${metaIv}","metaData":"${metaData}","compressed":${compress ? 'true' : 'false'},"chunks":[`;
                 yield prefix;
 
@@ -585,7 +585,6 @@
                         data = arrayBufferToBase64(chunkBuffer);
                     }
 
-                    // Build chunk JSON
                     const chunkObj = { index: chunkIndex, encrypted, salt, iv, data };
                     const chunkJson = JSON.stringify(chunkObj);
                     if (!first) yield ',';
@@ -594,34 +593,33 @@
 
                     offset = end;
                     chunkIndex++;
-                    // Yield to allow the event loop to breathe
-                    await new Promise(r => setTimeout(r, 10));
+                    // Yield control to browser for GC and UI updates
+                    await new Promise(r => setTimeout(r, 20));
                 }
 
-                // Suffix
                 yield ']}';
             }
 
             // ─── Streaming download ───────────────────────────────────
             async function downloadDLSFromStream(file, password, originalName) {
                 const parts = [];
-                let partCount = 0;
                 for await (const part of processFileStream(file, password)) {
                     parts.push(part);
-                    partCount++;
-                    // For large files, we could flush periodically, but we need the whole blob.
-                    // We'll keep parts in memory, but parts are strings, and we don't store the chunk data twice.
                 }
-                // Build blob from parts
-                const blob = new Blob(parts, { type: 'application/json' });
+                // Build blob with octet-stream to avoid .json extension
+                const blob = new Blob(parts, { type: 'application/octet-stream' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
+                // Remove any existing extension and add .dls
                 const baseName = originalName.replace(/\.[^.]+$/, '') || originalName;
                 a.download = `${baseName}.dls`;
                 a.href = url;
                 document.body.appendChild(a);
                 a.click();
-                setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 5000);
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 5000);
                 // Clear parts to free memory
                 parts.length = 0;
             }
@@ -653,15 +651,12 @@
                     }
                     let downloadBtn = '';
                     if (f._status === 'done' && f._container) {
-                        // We don't store container anymore, but we can just show download button that re-downloads? Not needed.
                         downloadBtn = `<button class="download-btn" data-download="${idx}" title="Download .dls">⬇️</button>`;
                     }
                     const pwd = f._password || '';
                     const strength = getPasswordStrength(pwd);
                     const strengthLabels = ['', 'Weak', 'Weak', 'Medium', 'Strong'];
                     const strengthClass = strength === 1 ? 'weak' : strength === 2 ? 'weak' : strength === 3 ? 'medium' : strength === 4 ? 'strong' : '';
-                    // Since we don't store compressed flag per file in container anymore, we'll just not show compressed badge for now
-                    // We'll rely on the user seeing the output size.
 
                     html += `
                         <div class="file-item${extraClass}" data-index="${idx}">
@@ -695,7 +690,6 @@
                 listFileCount.textContent = `${selectedFiles.length}`;
                 updateConvertButton();
 
-                // Remove handlers
                 container.querySelectorAll('[data-remove]').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const idx = parseInt(btn.dataset.remove, 10);
@@ -707,20 +701,12 @@
                         }
                     });
                 });
-                // Download handlers (re-download) – not needed for now
+                // Download handlers (re-download) – we don't store container, so we'll just warn.
                 container.querySelectorAll('[data-download]').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const idx = parseInt(btn.dataset.download, 10);
-                        const file = selectedFiles[idx];
-                        if (file && file._container) {
-                            // Re-download using stored container? we no longer store.
-                            // We'll re-run conversion? That would be expensive.
-                            // For now, we disable this since we don't store the container.
-                            showToast('Re-download not available in this version.', 'info', 2000);
-                        }
+                        showToast('Re-download not supported; convert again if needed.', 'info', 2000);
                     });
                 });
-                // Password input & toggle
                 container.querySelectorAll('.file-pwd').forEach(inp => {
                     const idx = parseInt(inp.dataset.idx, 10);
                     inp.addEventListener('input', (e) => {
@@ -865,7 +851,7 @@
             renderFileList();
             updateConvertButton();
 
-            console.log('📦 DLS Encoder v6.3 ready (streaming JSON, no chunk array)');
+            console.log('📦 DLS Encoder v6.4 ready (512 MB chunks, .dls extension)');
         })();
     </script>
 </body>
