@@ -14,15 +14,13 @@ h1{font-size:1.9rem;letter-spacing:-.02em;font-weight:700}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
 .drop{border:1.5px dashed #34405a;border-radius:var(--r);padding:34px 16px;text-align:center;cursor:pointer;transition:.2s;background:var(--panel2)}
 .drop:hover,.drop.over{border-color:var(--a);background:#1a2340}
-.drop b{display:block;font-size:1.05rem;margin-bottom:4px}
-.drop span{color:var(--mute);font-size:.85rem}
+.drop b{display:block;font-size:1.05rem;margin-bottom:4px}.drop span{color:var(--mute);font-size:.85rem}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .files{margin-top:14px;display:flex;flex-direction:column;gap:8px}
 .f{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .f .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
 .f .s{color:var(--mute);font-size:.78rem;white-space:nowrap}
-.f button{background:none;border:0;color:var(--mute);font-size:1rem;cursor:pointer}
-.f button:hover{color:var(--bad)}
+.f button{background:none;border:0;color:var(--mute);font-size:1rem;cursor:pointer}.f button:hover{color:var(--bad)}
 .f.done{border-color:#1f5b44}.f.err{border-color:#6b2a33}
 label.t{display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:10px 12px;border:1px solid var(--line);border-radius:12px;flex:1 1 240px;background:var(--panel2)}
 label.t:has(input:checked){border-color:var(--a);background:#1a2340}
@@ -32,10 +30,12 @@ label.t small{display:block;color:var(--mute);font-size:.78rem;margin-top:2px}
 .pw input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 44px 12px 14px;color:var(--text);font-size:.95rem}
 .pw input:focus{outline:2px solid var(--a);border-color:transparent}
 .pw button{position:absolute;right:6px;top:6px;background:none;border:0;font-size:1.1rem;cursor:pointer;padding:6px}
-.bar{height:4px;background:var(--line);border-radius:4px;margin-top:8px;overflow:hidden}
-.bar i{display:block;height:100%;width:0;transition:.2s}
-.hint{color:var(--mute);font-size:.78rem;margin-top:6px}
-.go{width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;font-weight:700;font-size:1rem;color:#0b0e14;cursor:pointer;background:linear-gradient(90deg,var(--a),var(--b));transition:.15s}
+.bar{height:4px;background:var(--line);border-radius:4px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;width:0;transition:.2s}
+.hint{color:var(--mute);font-size:.8rem;margin-top:6px}
+.kf{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.mini{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:9px;padding:8px 12px;font-size:.82rem;font-weight:600;cursor:pointer}.mini:hover{border-color:var(--a)}
+.hide{display:none!important}
+.go{width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;font-weight:700;font-size:1rem;color:#0b0e14;cursor:pointer;background:linear-gradient(90deg,var(--a),var(--b))}
 .go:hover:not(:disabled){filter:brightness(1.1)}.go:disabled{opacity:.45;cursor:not-allowed}
 .prog{display:none;margin-top:16px}
 .prog .top{display:flex;justify-content:space-between;font-size:.82rem;color:var(--mute);gap:8px}
@@ -44,11 +44,8 @@ label.t small{display:block;color:var(--mute);font-size:.78rem;margin-top:2px}
 .prog .bg i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--b));transition:width .15s}
 .msg{margin-top:12px;font-size:.88rem;display:none;padding:10px 12px;border-radius:10px}
 .msg.ok{display:block;background:#12281f;color:var(--ok)}.msg.bad{display:block;background:#2b141a;color:var(--bad)}
+.save{display:block;margin-top:8px;padding:11px 14px;border:1px solid var(--a);border-radius:12px;color:var(--a);text-decoration:none;font-weight:600;font-size:.9rem;word-break:break-all}
 footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
-.hide{display:none!important}
-.kf{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
-.mini{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:9px;padding:8px 12px;font-size:.82rem;font-weight:600;cursor:pointer}
-.mini:hover{border-color:var(--a)}
 </style>
 </head>
 <body>
@@ -68,11 +65,12 @@ footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
       <label class="t"><input type="radio" name="mode" value="each"><div>One per file<small>Each file gets its own .dls</small></div></label>
     </div>
     <div class="pw">
-      <input type="password" id="pwd" placeholder="Password (optional, leave blank for no encryption)" autocomplete="new-password">
+      <input type="password" id="pwd" placeholder="Password (optional)" autocomplete="new-password">
       <button id="eye" type="button" aria-label="Show password">👁️</button>
     </div>
     <div class="bar"><i id="str"></i></div>
-    <p class="hint" id="strTxt">No password: files are packed but not encrypted.</p>
+    <p class="hint" id="strTxt">No password and no key file: files are packed but not encrypted.</p>
+
     <div class="kf">
       <label class="row" style="cursor:pointer"><input type="checkbox" id="kfOn" style="accent-color:var(--a)"><b style="font-size:.92rem">Also require a key file</b></label>
       <p class="hint">A secret file you must pick again to decode. Without it, even the right password won't open the archive.</p>
@@ -82,11 +80,13 @@ footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
       </div>
       <input type="file" id="kfInp" hidden>
     </div>
+
     <button class="go" id="go" disabled>Create .dls</button>
     <div class="prog" id="prog"><div class="top"><span id="pl">Starting…</span><span id="pp">0%</span></div><div class="bg"><i id="pf"></i></div></div>
     <div class="msg" id="msg"></div>
+    <div id="saves"></div>
   </div>
-  <footer>DLS v2 · AES-256-GCM · PBKDF2-SHA256 600k · 8 MB chunks</footer>
+  <footer>DLS v2 · AES-256-GCM · PBKDF2-SHA256 600k · 8 MB chunks · optional key file</footer>
 </div>
 
 <script>
@@ -95,10 +95,10 @@ footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
 const $ = id => document.getElementById(id);
 const CHUNK = 8 * 1024 * 1024, ITER = 600000;
 const enc = new TextEncoder();
-let files = [], busy = false;
-
-/* ---------- UI ---------- */
+let files = [], busy = false, kf = null;
 const fmt = b => b >= 1073741824 ? (b/1073741824).toFixed(2)+' GB' : (b/1048576).toFixed(b<1048576?3:1)+' MB';
+
+/* ---------- File list ---------- */
 function render() {
   $('list').innerHTML = '';
   files.forEach((f, i) => {
@@ -106,7 +106,7 @@ function render() {
     d.className = 'f' + (f._st === 'done' ? ' done' : f._st === 'err' ? ' err' : '');
     d.innerHTML = '<span>' + (f._st==='done'?'✅':f._st==='err'?'❌':'📄') + '</span><span class="n"></span><span class="s">' + fmt(f.size) + '</span><button title="Remove">✕</button>';
     d.querySelector('.n').textContent = f.name;
-    d.querySelector('button').onclick = () => { if (!busy) { files.splice(i,1); render(); } };
+    d.querySelector('button').onclick = () => { if (!busy) { files.splice(i, 1); render(); } };
     $('list').appendChild(d);
   });
   $('go').disabled = !files.length || busy;
@@ -126,17 +126,28 @@ $('pwd').oninput = () => {
   const p = $('pwd').value; let s = 0;
   if (p.length>=8) s++; if (p.length>=12) s++; if (/[a-z]/.test(p)&&/[A-Z]/.test(p)) s++; if (/\d/.test(p)&&/[^\w]/.test(p)) s++;
   const bar = $('str'); bar.style.width = p ? (s*25)+'%' : '0'; bar.style.background = s<=1?'var(--bad)':s<=2?'#f0a24b':'var(--ok)';
-  $('strTxt').textContent = !p ? 'No password: files are packed but not encrypted.' : ['Weak','Weak','Okay','Good','Strong'][s] + ' password. You cannot recover files without it.';
+  $('strTxt').textContent = !p ? 'No password: encryption only happens if you use a key file.' : ['Weak','Weak','Okay','Good','Strong'][s] + ' password. You cannot recover files without it.';
 };
-let kf = null;
-function kfSet(bytes, text) { kf = bytes; $('kfStat').textContent = text; }
+function msg(t, k) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + k; }
+function prog(label, pct) { $('prog').style.display = 'block'; $('pl').textContent = label; $('pp').textContent = Math.round(pct)+'%'; $('pf').style.width = pct+'%'; }
+
+/* ---------- Key file ---------- */
+async function kfId(b) {
+  if (!window.crypto?.subtle) return '?';
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', b));
+  return Array.from(h.slice(0, 4), x => x.toString(16).padStart(2, '0')).join('');
+}
+async function kfSet(bytes, text) {
+  kf = bytes; $('kfStat').textContent = text;
+  if (bytes) $('kfStat').textContent = text + ' Key ID: ' + await kfId(bytes) + ' (the decoder shows the same ID when you pick the right file).';
+}
 $('kfOn').onchange = () => $('kfBox').classList.toggle('hide', !$('kfOn').checked);
 $('kfGen').onclick = () => {
-  const b = crypto.getRandomValues(new Uint8Array(32)), name = 'dls-' + new Date().toISOString().slice(0, 10) + '.key';
+  if (kf && !confirm('A key file is already selected. A new one is a different key, so archives made with the old key will need the old file. Make a new key anyway?')) return;
+  const b = crypto.getRandomValues(new Uint8Array(32)), name = 'dls-' + new Date().toISOString().slice(0, 10) + '-' + Math.random().toString(16).slice(2, 6) + '.key';
   const url = URL.createObjectURL(new Blob([b], {type:'application/octet-stream'}));
-  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
-  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
-  kfSet(b, 'New key file ' + name + ' downloaded and ready. Back it up in two safe places; without it your archives cannot be opened.');
+  const a = saveLink('Key file ' + name, name, url); a.classList.add('keep'); a.click();
+  kfSet(b, 'New key file ' + name + ' created. If no download started, tap the Save link below. Back it up in two safe places.');
 };
 $('kfPick').onclick = () => $('kfInp').click();
 $('kfInp').onchange = async e => {
@@ -145,14 +156,16 @@ $('kfInp').onchange = async e => {
   if (f.size > 50 * 1048576) { kfSet(null, 'That file is too large. Use a file under 50 MB.'); return; }
   kfSet(new Uint8Array(await f.arrayBuffer()), 'Key file ready: ' + f.name + '. You must pick this exact file again to decode.');
 };
-function msg(t, k) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + k; }
-function prog(label, pct) { $('prog').style.display = 'block'; $('pl').textContent = label; $('pp').textContent = Math.round(pct)+'%'; $('pf').style.width = pct+'%'; }
+function saveLink(label, name, url) { // visible link, so saving works even if the browser blocks automatic downloads
+  const a = document.createElement('a'); a.href = url; a.download = name; a.className = 'save'; a.textContent = '⬇ Save: ' + label;
+  $('saves').appendChild(a); return a;
+}
 
 /* ---------- Crypto ---------- */
-async function getKey(pw, salt, kf) {
+async function getKey(pw, salt, key) {
   let m = enc.encode(pw);
-  if (kf) { // password + 0x00 + SHA-256(key file)
-    const h = new Uint8Array(await crypto.subtle.digest('SHA-256', kf)), x = new Uint8Array(m.length + 33);
+  if (key) { // password + 0x00 + SHA-256(key file)
+    const h = new Uint8Array(await crypto.subtle.digest('SHA-256', key)), x = new Uint8Array(m.length + 33);
     x.set(m); x.set(h, m.length + 1); m = x;
   }
   const km = await crypto.subtle.importKey('raw', m, 'PBKDF2', false, ['deriveKey']);
@@ -167,20 +180,18 @@ const NOCOMP = /^(video|audio|image)\/|zip|rar|7z|gzip|bzip|compressed|octet-str
 const NOCOMP_EXT = /\.(mp4|mkv|mov|avi|webm|mp3|aac|flac|ogg|m4a|jpe?g|png|gif|webp|zip|rar|7z|gz|bz2|xz|apk)$/i;
 
 /* ---------- Writers ---------- */
-// Streams to disk when the browser allows it, otherwise to a Blob (browsers keep big Blobs on disk, not in RAM).
 async function openWriter(name, usePicker) {
   if (usePicker && window.showSaveFilePicker) {
     const h = await window.showSaveFilePicker({suggestedName:name, types:[{description:'DLS archive', accept:{'application/octet-stream':['.dls']}}]});
     const w = await h.createWritable();
-    return { write: u8 => w.write(u8), close: () => w.close(), abort: () => w.abort().catch(()=>{}) };
+    return { write: u8 => w.write(u8), close: () => w.close(), abort: () => w.abort().catch(() => {}), direct: true };
   }
   let parts = [], n = 0;
   return {
     write: async u8 => { parts.push(u8); if (++n % 8 === 0) parts = [new Blob(parts)]; },
     close: async () => {
-      const url = URL.createObjectURL(new Blob(parts, {type:'application/octet-stream'}));
-      const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
-      setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
+      const blob = new Blob(parts, {type:'application/octet-stream'});
+      saveLink(name + ' (' + fmt(blob.size) + ')', name, URL.createObjectURL(blob)).click();
     },
     abort: async () => { parts = []; }
   };
@@ -189,18 +200,18 @@ async function openWriter(name, usePicker) {
 /* ---------- Format (DLS v2, big-endian) ----------
  Header: "DLS2" | version u8=2 | flags u8 (1=encrypted, 2=key file) | iterations u32 | salt 16B
  Records: type u8 | length u32 | payload      (seq number starts at 0, +1 per record)
-   1 = file start  (payload plaintext: JSON {name,type,size,lastModified})
-   2 = data chunk  (payload plaintext: flag u8 [0 raw, 1 gzip] + bytes)
-   3 = file end    (payload plaintext: empty)
-   255 = archive end (payload plaintext: JSON {files:n})
+   1 = file start  (JSON {name,type,size,lastModified})
+   2 = data chunk  (flag u8 [0 raw, 1 gzip] + bytes)
+   3 = file end    (empty)
+   255 = archive end (JSON {files:n})
  If encrypted: payload = iv(12B) + AES-GCM(plaintext, additionalData = seq as u32 BE).
 */
-async function writeArchive(list, pw, kf, out, onProgress) {
-  const encrypted = !!pw || !!kf;
+async function writeArchive(list, pw, key, out, onProgress) {
+  const encrypted = !!pw || !!key;
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = encrypted ? await getKey(pw, salt, kf) : null;
+  const ck = encrypted ? await getKey(pw, salt, key) : null;
   const head = new Uint8Array(26), hv = new DataView(head.buffer);
-  head.set(enc.encode('DLS2')); hv.setUint8(4, 2); hv.setUint8(5, (encrypted ? 1 : 0) | (kf ? 2 : 0)); hv.setUint32(6, ITER); head.set(salt, 10);
+  head.set(enc.encode('DLS2')); hv.setUint8(4, 2); hv.setUint8(5, (encrypted ? 1 : 0) | (key ? 2 : 0)); hv.setUint32(6, ITER); head.set(salt, 10);
   await out.write(head);
   let seq = 0;
   const rec = async (type, plain) => {
@@ -208,7 +219,7 @@ async function writeArchive(list, pw, kf, out, onProgress) {
     if (encrypted) {
       const iv = crypto.getRandomValues(new Uint8Array(12)), aad = new Uint8Array(4);
       new DataView(aad.buffer).setUint32(0, seq);
-      const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv, additionalData:aad}, key, plain));
+      const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv, additionalData:aad}, ck, plain));
       payload = new Uint8Array(12 + ct.length); payload.set(iv); payload.set(ct, 12);
     }
     const r = new Uint8Array(5 + payload.length);
@@ -236,33 +247,31 @@ async function writeArchive(list, pw, kf, out, onProgress) {
 /* ---------- Run ---------- */
 $('go').onclick = async () => {
   if (busy || !files.length) return;
-  if (!window.crypto?.subtle) { msg('Encryption needs HTTPS or localhost. Open this page from a secure address.', 'bad'); return; }
-  if ($('kfOn').checked && !kf) { msg('Generate or choose a key file first, or turn off the key file option.', 'bad'); return; }
-  busy = true; render(); $('msg').className = 'msg'; $('go').disabled = true;
+  const useKf = $('kfOn').checked;
+  if (useKf && !kf) { msg('Generate or choose a key file first, or turn off the key file option.', 'bad'); return; }
+  if ((useKf || $('pwd').value) && !window.crypto?.subtle) { msg('Encryption needs HTTPS or localhost. Open this page from a secure address.', 'bad'); return; }
+  busy = true; render(); $('msg').className = 'msg'; $('saves').querySelectorAll('.save:not(.keep)').forEach(x => x.remove());
   files.forEach(f => f._st = '');
-  const kfUse = $('kfOn').checked ? kf : null, pw = $('pwd').value, single = document.querySelector('input[name=mode]:checked').value === 'single';
+  const pw = $('pwd').value, key = useKf ? kf : null, single = document.querySelector('input[name=mode]:checked').value === 'single';
   const jobs = single ? [{list:files, name:(files.length===1 ? files[0].name.replace(/\.[^.]+$/,'') : 'archive') + '.dls'}]
                       : files.map(f => ({list:[f], name:f.name.replace(/\.[^.]+$/,'') + '.dls'}));
-  let ok = 0;
+  let ok = 0, direct = true;
   try {
     for (let j = 0; j < jobs.length; j++) {
-      const job = jobs[j];
-      let out;
-      // Save dialog must open right on the tap, so only for the first/only output.
-      try { out = await openWriter(job.name, jobs.length === 1); }
+      const job = jobs[j]; let out;
+      try { out = await openWriter(job.name, jobs.length === 1); } // save dialog must open right on the tap
       catch (e) { if (e.name === 'AbortError') { msg('Cancelled.', 'bad'); break; } throw e; }
+      if (!out.direct) direct = false;
       try {
-        await writeArchive(job.list, pw, kfUse, out, (n, p) => prog(n, (j + p/100) / jobs.length * 100));
+        await writeArchive(job.list, pw, key, out, (n, p) => prog(n, (j + p/100) / jobs.length * 100));
         await out.close(); job.list.forEach(f => f._st = 'done'); ok += job.list.length;
       } catch (e) { await out.abort(); job.list.forEach(f => f._st = 'err'); console.error(e); msg('Failed: ' + (e.message || e), 'bad'); }
       render();
-      await new Promise(r => setTimeout(r, 400));
     }
     prog('Done', 100);
-    if (ok === files.length) msg(`Saved ${jobs.length === 1 ? job_name(jobs[0]) : jobs.length + ' archives'}.`, 'ok');
+    if (ok === files.length) msg(direct ? 'Saved.' : 'Done. If a download did not start, tap the Save link below.', 'ok');
   } finally { busy = false; render(); }
 };
-const job_name = j => j.name;
 render();
 })();
 </script>
