@@ -45,6 +45,10 @@ label.t small{display:block;color:var(--mute);font-size:.78rem;margin-top:2px}
 .msg{margin-top:12px;font-size:.88rem;display:none;padding:10px 12px;border-radius:10px}
 .msg.ok{display:block;background:#12281f;color:var(--ok)}.msg.bad{display:block;background:#2b141a;color:var(--bad)}
 footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
+.hide{display:none!important}
+.kf{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.mini{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:9px;padding:8px 12px;font-size:.82rem;font-weight:600;cursor:pointer}
+.mini:hover{border-color:var(--a)}
 </style>
 </head>
 <body>
@@ -69,6 +73,15 @@ footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
     </div>
     <div class="bar"><i id="str"></i></div>
     <p class="hint" id="strTxt">No password: files are packed but not encrypted.</p>
+    <div class="kf">
+      <label class="row" style="cursor:pointer"><input type="checkbox" id="kfOn" style="accent-color:var(--a)"><b style="font-size:.92rem">Also require a key file</b></label>
+      <p class="hint">A secret file you must pick again to decode. Without it, even the right password won't open the archive.</p>
+      <div id="kfBox" class="hide" style="margin-top:10px">
+        <div class="row"><button class="mini" id="kfGen" type="button">Generate new key file</button><button class="mini" id="kfPick" type="button">Choose existing file</button></div>
+        <p class="hint" id="kfStat">No key file selected.</p>
+      </div>
+      <input type="file" id="kfInp" hidden>
+    </div>
     <button class="go" id="go" disabled>Create .dls</button>
     <div class="prog" id="prog"><div class="top"><span id="pl">Starting…</span><span id="pp">0%</span></div><div class="bg"><i id="pf"></i></div></div>
     <div class="msg" id="msg"></div>
@@ -115,12 +128,34 @@ $('pwd').oninput = () => {
   const bar = $('str'); bar.style.width = p ? (s*25)+'%' : '0'; bar.style.background = s<=1?'var(--bad)':s<=2?'#f0a24b':'var(--ok)';
   $('strTxt').textContent = !p ? 'No password: files are packed but not encrypted.' : ['Weak','Weak','Okay','Good','Strong'][s] + ' password. You cannot recover files without it.';
 };
+let kf = null;
+function kfSet(bytes, text) { kf = bytes; $('kfStat').textContent = text; }
+$('kfOn').onchange = () => $('kfBox').classList.toggle('hide', !$('kfOn').checked);
+$('kfGen').onclick = () => {
+  const b = crypto.getRandomValues(new Uint8Array(32)), name = 'dls-' + new Date().toISOString().slice(0, 10) + '.key';
+  const url = URL.createObjectURL(new Blob([b], {type:'application/octet-stream'}));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
+  kfSet(b, 'New key file ' + name + ' downloaded and ready. Back it up in two safe places; without it your archives cannot be opened.');
+};
+$('kfPick').onclick = () => $('kfInp').click();
+$('kfInp').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (!f.size) { kfSet(null, 'That file is empty. Pick another.'); return; }
+  if (f.size > 50 * 1048576) { kfSet(null, 'That file is too large. Use a file under 50 MB.'); return; }
+  kfSet(new Uint8Array(await f.arrayBuffer()), 'Key file ready: ' + f.name + '. You must pick this exact file again to decode.');
+};
 function msg(t, k) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + k; }
 function prog(label, pct) { $('prog').style.display = 'block'; $('pl').textContent = label; $('pp').textContent = Math.round(pct)+'%'; $('pf').style.width = pct+'%'; }
 
 /* ---------- Crypto ---------- */
-async function getKey(pw, salt) {
-  const km = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
+async function getKey(pw, salt, kf) {
+  let m = enc.encode(pw);
+  if (kf) { // password + 0x00 + SHA-256(key file)
+    const h = new Uint8Array(await crypto.subtle.digest('SHA-256', kf)), x = new Uint8Array(m.length + 33);
+    x.set(m); x.set(h, m.length + 1); m = x;
+  }
+  const km = await crypto.subtle.importKey('raw', m, 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:ITER, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, ['encrypt']);
 }
 async function gzip(u8) {
@@ -152,7 +187,7 @@ async function openWriter(name, usePicker) {
 }
 
 /* ---------- Format (DLS v2, big-endian) ----------
- Header: "DLS2" | version u8=2 | encrypted u8 | iterations u32 | salt 16B
+ Header: "DLS2" | version u8=2 | flags u8 (1=encrypted, 2=key file) | iterations u32 | salt 16B
  Records: type u8 | length u32 | payload      (seq number starts at 0, +1 per record)
    1 = file start  (payload plaintext: JSON {name,type,size,lastModified})
    2 = data chunk  (payload plaintext: flag u8 [0 raw, 1 gzip] + bytes)
@@ -160,12 +195,12 @@ async function openWriter(name, usePicker) {
    255 = archive end (payload plaintext: JSON {files:n})
  If encrypted: payload = iv(12B) + AES-GCM(plaintext, additionalData = seq as u32 BE).
 */
-async function writeArchive(list, pw, out, onProgress) {
-  const encrypted = !!pw;
+async function writeArchive(list, pw, kf, out, onProgress) {
+  const encrypted = !!pw || !!kf;
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = encrypted ? await getKey(pw, salt) : null;
+  const key = encrypted ? await getKey(pw, salt, kf) : null;
   const head = new Uint8Array(26), hv = new DataView(head.buffer);
-  head.set(enc.encode('DLS2')); hv.setUint8(4, 2); hv.setUint8(5, encrypted ? 1 : 0); hv.setUint32(6, ITER); head.set(salt, 10);
+  head.set(enc.encode('DLS2')); hv.setUint8(4, 2); hv.setUint8(5, (encrypted ? 1 : 0) | (kf ? 2 : 0)); hv.setUint32(6, ITER); head.set(salt, 10);
   await out.write(head);
   let seq = 0;
   const rec = async (type, plain) => {
@@ -202,9 +237,10 @@ async function writeArchive(list, pw, out, onProgress) {
 $('go').onclick = async () => {
   if (busy || !files.length) return;
   if (!window.crypto?.subtle) { msg('Encryption needs HTTPS or localhost. Open this page from a secure address.', 'bad'); return; }
+  if ($('kfOn').checked && !kf) { msg('Generate or choose a key file first, or turn off the key file option.', 'bad'); return; }
   busy = true; render(); $('msg').className = 'msg'; $('go').disabled = true;
   files.forEach(f => f._st = '');
-  const pw = $('pwd').value, single = document.querySelector('input[name=mode]:checked').value === 'single';
+  const kfUse = $('kfOn').checked ? kf : null, pw = $('pwd').value, single = document.querySelector('input[name=mode]:checked').value === 'single';
   const jobs = single ? [{list:files, name:(files.length===1 ? files[0].name.replace(/\.[^.]+$/,'') : 'archive') + '.dls'}]
                       : files.map(f => ({list:[f], name:f.name.replace(/\.[^.]+$/,'') + '.dls'}));
   let ok = 0;
@@ -216,7 +252,7 @@ $('go').onclick = async () => {
       try { out = await openWriter(job.name, jobs.length === 1); }
       catch (e) { if (e.name === 'AbortError') { msg('Cancelled.', 'bad'); break; } throw e; }
       try {
-        await writeArchive(job.list, pw, out, (n, p) => prog(n, (j + p/100) / jobs.length * 100));
+        await writeArchive(job.list, pw, kfUse, out, (n, p) => prog(n, (j + p/100) / jobs.length * 100));
         await out.close(); job.list.forEach(f => f._st = 'done'); ok += job.list.length;
       } catch (e) { await out.abort(); job.list.forEach(f => f._st = 'err'); console.error(e); msg('Failed: ' + (e.message || e), 'bad'); }
       render();
