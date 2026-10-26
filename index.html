@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DLS Encoder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DLS Encoder v3</title>
+<!-- DLS Encoder v3 -->
 <style>
 :root{--bg:#0b0e14;--panel:#121722;--panel2:#181f2d;--line:#242d3f;--text:#e9eef7;--mute:#8a96ab;--a:#7c9cff;--b:#b18cff;--ok:#42d392;--bad:#ff6b7a;--r:16px;--font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -46,37 +47,55 @@ label.t small{display:block;color:var(--mute);font-size:.78rem;margin-top:2px}
 .msg.ok{display:block;background:#12281f;color:var(--ok)}.msg.bad{display:block;background:#2b141a;color:var(--bad)}
 .save{display:block;margin-top:8px;padding:11px 14px;border:1px solid var(--a);border-radius:12px;color:var(--a);text-decoration:none;font-weight:600;font-size:.9rem;word-break:break-all}
 footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
+
+/* v3 fluid layout */
+html{scroll-behavior:smooth;scroll-padding:12px 0 96px;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{min-height:100dvh;padding:clamp(14px,4vw,28px) max(clamp(12px,4vw,16px),env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) max(clamp(12px,4vw,16px),env(safe-area-inset-left))}
+h1{font-size:clamp(1.5rem,6vw,1.9rem);display:flex;align-items:center;gap:10px}
+.ver{font-size:.7rem;font-weight:600;color:var(--mute);border:1px solid var(--line);border-radius:20px;padding:2px 9px;letter-spacing:0}
+.sub{margin:4px 0 18px;font-size:.9rem}
+.card{padding:14px;margin-bottom:12px}
+.drop{padding:22px 12px}.drop b{font-size:1rem}
+input,button{font-family:inherit}
+.pw input,.pwrow input{font-size:16px}
+.mini{min-height:40px}
+footer{margin-top:16px}
+.f{padding:9px 10px}.f button{min-width:36px;min-height:36px}
+label.t{flex:1 1 150px;padding:10px}
+.kf{padding:12px}.mini{flex:1 1 auto}
+.go{min-height:48px;position:sticky;bottom:max(10px,env(safe-area-inset-bottom));box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.go.plain{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>DLS Encoder</h1>
-  <p class="sub">Pack one or many files into a single .dls archive. Big files are streamed in small pieces, so memory stays low.</p>
+  <h1>DLS Encoder <span class="ver">v3</span></h1>
+  <p class="sub">Pack files into one encrypted .dls</p>
 
   <div class="card">
-    <div class="drop" id="drop"><b>Drop files here or tap to choose</b><span>Add as many as you like. Large files are fine.</span></div>
+    <div class="drop" id="drop"><b>Add files</b><span>Tap or drop here</span></div>
     <input type="file" id="inp" multiple hidden>
     <div class="files" id="list"></div>
   </div>
 
   <div class="card">
     <div class="row">
-      <label class="t"><input type="radio" name="mode" value="single" checked><div>One archive<small>All files inside a single .dls</small></div></label>
-      <label class="t"><input type="radio" name="mode" value="each"><div>One per file<small>Each file gets its own .dls</small></div></label>
+      <label class="t"><input type="radio" name="mode" value="single" checked><div>One archive<small>Everything in one .dls</small></div></label>
+      <label class="t"><input type="radio" name="mode" value="each"><div>One per file<small>Separate .dls each</small></div></label>
     </div>
     <div class="pw">
       <input type="password" id="pwd" placeholder="Password (optional)" autocomplete="new-password">
       <button id="eye" type="button" aria-label="Show password">👁️</button>
     </div>
     <div class="bar"><i id="str"></i></div>
-    <p class="hint" id="strTxt">No password and no key file: files are packed but not encrypted.</p>
+    <p class="hint" id="strTxt"></p>
 
     <div class="kf">
-      <label class="row" style="cursor:pointer"><input type="checkbox" id="kfOn" style="accent-color:var(--a)"><b style="font-size:.92rem">Also require a key file</b></label>
-      <p class="hint">A secret file you must pick again to decode. Without it, even the right password won't open the archive.</p>
+      <label class="row" style="cursor:pointer"><input type="checkbox" id="kfOn" style="accent-color:var(--a)"><b style="font-size:.92rem">Use a key file</b></label>
       <div id="kfBox" class="hide" style="margin-top:10px">
-        <div class="row"><button class="mini" id="kfGen" type="button">Generate new key file</button><button class="mini" id="kfPick" type="button">Choose existing file</button></div>
-        <p class="hint" id="kfStat">No key file selected.</p>
+        <div class="row"><button class="mini" id="kfGen" type="button">New key file</button><button class="mini" id="kfPick" type="button">Choose file</button></div>
+        <p class="hint" id="kfStat">Needed again to decode.</p>
       </div>
       <input type="file" id="kfInp" hidden>
     </div>
@@ -86,7 +105,7 @@ footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
     <div class="msg" id="msg"></div>
     <div id="saves"></div>
   </div>
-  <footer>DLS v2 · AES-256-GCM · PBKDF2-SHA256 600k · 8 MB chunks · optional key file</footer>
+  <footer>DLS Encoder v3 · AES-256-GCM</footer>
 </div>
 
 <script>
@@ -97,6 +116,13 @@ const CHUNK = 8 * 1024 * 1024, ITER = 600000;
 const enc = new TextEncoder();
 let files = [], busy = false, kf = null;
 const fmt = b => b >= 1073741824 ? (b/1073741824).toFixed(2)+' GB' : (b/1048576).toFixed(b<1048576?3:1)+' MB';
+
+const reveal = el => { try { el.scrollIntoView({block:'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); } catch {} };
+function goLabel() {
+  const plain = !$('pwd').value && !($('kfOn').checked && kf);
+  $('go').textContent = (plain ? 'Pack, no encryption' : 'Encrypt & pack') + (files.length > 1 ? ` · ${files.length} files` : '');
+  $('go').classList.toggle('plain', plain);
+}
 
 /* ---------- File list ---------- */
 function render() {
@@ -110,7 +136,7 @@ function render() {
     $('list').appendChild(d);
   });
   $('go').disabled = !files.length || busy;
-  $('go').textContent = files.length > 1 ? `Create .dls from ${files.length} files` : 'Create .dls';
+  goLabel();
 }
 function add(list) {
   for (const f of list) if (!files.some(x => x.name===f.name && x.size===f.size && x.lastModified===f.lastModified)) files.push(f);
@@ -126,10 +152,10 @@ $('pwd').oninput = () => {
   const p = $('pwd').value; let s = 0;
   if (p.length>=8) s++; if (p.length>=12) s++; if (/[a-z]/.test(p)&&/[A-Z]/.test(p)) s++; if (/\d/.test(p)&&/[^\w]/.test(p)) s++;
   const bar = $('str'); bar.style.width = p ? (s*25)+'%' : '0'; bar.style.background = s<=1?'var(--bad)':s<=2?'#f0a24b':'var(--ok)';
-  $('strTxt').textContent = !p ? 'No password: encryption only happens if you use a key file.' : ['Weak','Weak','Okay','Good','Strong'][s] + ' password. You cannot recover files without it.';
+  $('strTxt').textContent = p ? ['Weak','Weak','Okay','Good','Strong'][s] : ''; goLabel();
 };
-function msg(t, k) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + k; }
-function prog(label, pct) { $('prog').style.display = 'block'; $('pl').textContent = label; $('pp').textContent = Math.round(pct)+'%'; $('pf').style.width = pct+'%'; }
+function msg(t, k) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + k; reveal(m); }
+function prog(label, pct) { if ($('prog').style.display !== 'block') { $('prog').style.display = 'block'; reveal($('prog')); } $('pl').textContent = label; $('pp').textContent = Math.round(pct)+'%'; $('pf').style.width = pct+'%'; }
 
 /* ---------- Key file ---------- */
 async function kfId(b) {
@@ -138,27 +164,27 @@ async function kfId(b) {
   return Array.from(h.slice(0, 4), x => x.toString(16).padStart(2, '0')).join('');
 }
 async function kfSet(bytes, text) {
-  kf = bytes; $('kfStat').textContent = text;
-  if (bytes) $('kfStat').textContent = text + ' Key ID: ' + await kfId(bytes) + ' (the decoder shows the same ID when you pick the right file).';
+  kf = bytes; $('kfStat').textContent = text; goLabel();
+  if (bytes) $('kfStat').textContent = text + ' · ID ' + await kfId(bytes);
 }
-$('kfOn').onchange = () => $('kfBox').classList.toggle('hide', !$('kfOn').checked);
+$('kfOn').onchange = () => { $('kfBox').classList.toggle('hide', !$('kfOn').checked); goLabel(); };
 $('kfGen').onclick = () => {
-  if (kf && !confirm('A key file is already selected. A new one is a different key, so archives made with the old key will need the old file. Make a new key anyway?')) return;
+  if (kf && !confirm('Replace the current key file? Archives made with the old key need the old file.')) return;
   const b = crypto.getRandomValues(new Uint8Array(32)), name = 'dls-' + new Date().toISOString().slice(0, 10) + '-' + Math.random().toString(16).slice(2, 6) + '.key';
   const url = URL.createObjectURL(new Blob([b], {type:'application/octet-stream'}));
-  const a = saveLink('Key file ' + name, name, url); a.classList.add('keep'); a.click();
-  kfSet(b, 'New key file ' + name + ' created. If no download started, tap the Save link below. Back it up in two safe places.');
+  const a = saveLink(name, name, url); a.classList.add('keep'); a.click();
+  kfSet(b, 'Saved ' + name + ' · keep a backup');
 };
 $('kfPick').onclick = () => $('kfInp').click();
 $('kfInp').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  if (!f.size) { kfSet(null, 'That file is empty. Pick another.'); return; }
-  if (f.size > 50 * 1048576) { kfSet(null, 'That file is too large. Use a file under 50 MB.'); return; }
-  kfSet(new Uint8Array(await f.arrayBuffer()), 'Key file ready: ' + f.name + '. You must pick this exact file again to decode.');
+  if (!f.size) { kfSet(null, 'File is empty.'); return; }
+  if (f.size > 50 * 1048576) { kfSet(null, 'Max 50 MB.'); return; }
+  kfSet(new Uint8Array(await f.arrayBuffer()), f.name);
 };
 function saveLink(label, name, url) { // visible link, so saving works even if the browser blocks automatic downloads
   const a = document.createElement('a'); a.href = url; a.download = name; a.className = 'save'; a.textContent = '⬇ Save: ' + label;
-  $('saves').appendChild(a); return a;
+  $('saves').appendChild(a); reveal(a); return a;
 }
 
 /* ---------- Crypto ---------- */
@@ -248,8 +274,8 @@ async function writeArchive(list, pw, key, out, onProgress) {
 $('go').onclick = async () => {
   if (busy || !files.length) return;
   const useKf = $('kfOn').checked;
-  if (useKf && !kf) { msg('Generate or choose a key file first, or turn off the key file option.', 'bad'); return; }
-  if ((useKf || $('pwd').value) && !window.crypto?.subtle) { msg('Encryption needs HTTPS or localhost. Open this page from a secure address.', 'bad'); return; }
+  if (useKf && !kf) { msg('Add a key file first.', 'bad'); return; }
+  if ((useKf || $('pwd').value) && !window.crypto?.subtle) { msg('Encryption needs a secure (https) page.', 'bad'); return; }
   busy = true; render(); $('msg').className = 'msg'; $('saves').querySelectorAll('.save:not(.keep)').forEach(x => x.remove());
   files.forEach(f => f._st = '');
   const pw = $('pwd').value, key = useKf ? kf : null, single = document.querySelector('input[name=mode]:checked').value === 'single';
@@ -269,10 +295,19 @@ $('go').onclick = async () => {
       render();
     }
     prog('Done', 100);
-    if (ok === files.length) msg(direct ? 'Saved.' : 'Done. If a download did not start, tap the Save link below.', 'ok');
+    if (ok === files.length) msg(direct ? 'Saved.' : 'Done. Tap Save below if nothing downloaded.', 'ok');
   } finally { busy = false; render(); }
 };
+/* ---------- Scroll memory ---------- */
+try {
+  const KEY = 'dls_enc_scroll', saved = parseInt(localStorage.getItem(KEY), 10);
+  if (saved > 0) { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; requestAnimationFrame(() => scrollTo(0, saved)); }
+  let t = 0;
+  addEventListener('scroll', () => { if (t) return; t = requestAnimationFrame(() => { t = 0; try { localStorage.setItem(KEY, String(Math.round(scrollY))); } catch {} }); }, {passive:true});
+} catch {}
+
 render();
+console.log('DLS Encoder v3');
 })();
 </script>
 </body>
