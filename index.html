@@ -1,858 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DLS Encoder · Packer</title>
-    <style>
-        /* (same CSS – unchanged) */
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        :root {
-            --bg: #0d1117;
-            --surface: #161b22;
-            --surface2: #1c2333;
-            --border: #30363d;
-            --text: #e6edf3;
-            --text-muted: #8b949e;
-            --accent: #58a6ff;
-            --accent-hover: #79c0ff;
-            --success: #3fb950;
-            --danger: #f85149;
-            --radius: 10px;
-            --shadow: 0 8px 24px rgba(0,0,0,0.5);
-            --font: -apple-system, 'Segoe UI', Roboto, sans-serif;
-        }
-        html { scroll-behavior: smooth; }
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--font);
-            min-height: 100vh;
-            padding: 1.5rem 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container { max-width: 960px; width: 100%; }
-        h1 {
-            font-size: 1.7rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 0.2rem;
-        }
-        h1 small { font-size: 0.8rem; font-weight: 400; color: var(--text-muted); }
-        .subhead { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.2rem 1.5rem;
-            margin-bottom: 1.2rem;
-            box-shadow: var(--shadow);
-        }
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.3rem;
-            margin-bottom: 0.8rem;
-        }
-        .card-header h2 { font-size: 1.1rem; font-weight: 500; }
-        label { font-weight: 500; font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem; }
-        input[type="file"] {
-            display: block;
-            width: 100%;
-            padding: 0.7rem 0.8rem;
-            background: var(--surface2);
-            border: 1px dashed var(--border);
-            border-radius: var(--radius);
-            color: var(--text);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: border-color 0.25s, background 0.25s;
-        }
-        input[type="file"]:hover { border-color: var(--accent); background: #1f2937; }
-        input[type="file"]::file-selector-button {
-            background: var(--accent);
-            color: #0d1117;
-            border: none;
-            padding: 0.3rem 1rem;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            margin-right: 0.8rem;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.5rem 1.4rem;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s, opacity 0.2s;
-            background: var(--accent);
-            color: #0d1117;
-        }
-        .btn:hover:not(:disabled) { background: var(--accent-hover); transform: scale(1.01); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-success { background: var(--success); color: #0d1117; }
-        .btn-success:hover:not(:disabled) { background: #4cda64; }
-        .btn-danger { background: var(--danger); color: #fff; }
-        .btn-danger:hover:not(:disabled) { background: #ff6b6b; }
-        .btn-sm { padding: 0.2rem 0.8rem; font-size: 0.75rem; }
-        .file-list { margin-top: 0.8rem; }
-        .file-item {
-            background: var(--surface2);
-            border-radius: 6px;
-            margin-bottom: 0.4rem;
-            border-left: 3px solid var(--accent);
-            padding: 0.5rem 0.6rem;
-        }
-        .file-row {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            flex-wrap: wrap;
-        }
-        .file-item .name {
-            font-weight: 500;
-            flex: 1 1 0;
-            min-width: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 0.85rem;
-        }
-        .file-item .meta {
-            color: var(--text-muted);
-            font-size: 0.7rem;
-            display: flex;
-            gap: 0.4rem;
-            flex-shrink: 0;
-        }
-        .file-item .badge {
-            display: inline-block;
-            padding: 0.05rem 0.5rem;
-            border-radius: 20px;
-            font-size: 0.6rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            background: var(--surface);
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-        .badge.audio { border-color: #58a6ff; color: #58a6ff; }
-        .badge.video { border-color: #f0883e; color: #f0883e; }
-        .badge.document { border-color: #3fb950; color: #3fb950; }
-        .badge.apk { border-color: #d29922; color: #d29922; }
-        .badge.image { border-color: #bc8cff; color: #bc8cff; }
-        .badge.archive { border-color: #f85149; color: #f85149; }
-        .badge.other { border-color: #8b949e; color: #8b949e; }
-        .file-item .pwd-group {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin-top: 0.2rem;
-            flex-wrap: wrap;
-        }
-        .file-item .pwd-group input[type="password"],
-        .file-item .pwd-group input[type="text"] {
-            flex: 1 1 140px;
-            padding: 0.2rem 0.5rem;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 0.75rem;
-            transition: border-color 0.2s;
-        }
-        .file-item .pwd-group input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(88,166,255,0.12);
-        }
-        .file-item .pwd-group .toggle-pwd {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 0 0.2rem;
-        }
-        .file-item .pwd-group .toggle-pwd:hover { color: var(--text); }
-        .strength-bar {
-            display: flex;
-            gap: 0.2rem;
-            margin-top: 0.1rem;
-            width: 100%;
-            height: 4px;
-        }
-        .strength-bar .segment {
-            flex: 1;
-            background: var(--border);
-            border-radius: 2px;
-            transition: background 0.2s;
-        }
-        .strength-bar .segment.active.weak { background: var(--danger); }
-        .strength-bar .segment.active.medium { background: #f0883e; }
-        .strength-bar .segment.active.strong { background: var(--success); }
-        .strength-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem; }
-        .file-item .actions {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin-left: auto;
-            flex-shrink: 0;
-        }
-        .file-item .status-icon { font-size: 0.9rem; }
-        .file-item .remove-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 0 0.2rem;
-        }
-        .file-item .remove-btn:hover { color: var(--danger); }
-        .file-item .download-btn {
-            background: transparent;
-            border: none;
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 0 0.2rem;
-            transition: color 0.2s;
-        }
-        .file-item .download-btn:hover { color: var(--accent-hover); }
-        .file-item.done { border-left-color: var(--success); opacity: 0.85; }
-        .file-item.error-item { border-left-color: var(--danger); }
-        .status-bar {
-            margin-top: 0.8rem;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            background: var(--surface2);
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.3rem;
-            min-height: 2.5rem;
-        }
-        .status-bar .progress-text { color: var(--text-muted); }
-        .status-bar .count { font-weight: 500; }
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(120px);
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 0.6rem 1.5rem;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            font-weight: 500;
-            font-size: 0.9rem;
-            opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s;
-            pointer-events: none;
-            z-index: 999;
-            max-width: 90%;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
-        .toast.error { border-color: var(--danger); }
-        .toast.success { border-color: var(--success); }
-        .spinner {
-            display: inline-block;
-            width: 0.9rem;
-            height: 0.9rem;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            vertical-align: middle;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .file-input-wrap { position: relative; }
-        .file-input-wrap input[type="file"] { padding: 0.7rem 0.8rem; }
-        .drag-over { border-color: var(--accent) !important; background: #1f2937 !important; }
-        .empty-state {
-            padding: 1rem 0.5rem;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-        .empty-state .icon { font-size: 2rem; margin-bottom: 0.2rem; opacity: 0.4; }
-        .conversion-progress { margin: 0.5rem 0; }
-        .conversion-progress .bar-bg {
-            background: var(--surface2);
-            border-radius: 20px;
-            height: 4px;
-            overflow: hidden;
-            margin-top: 0.2rem;
-        }
-        .conversion-progress .bar-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--accent);
-            border-radius: 20px;
-            transition: width 0.3s ease;
-        }
-        .conversion-progress .progress-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-        @media (max-width: 600px) {
-            body { padding: 0.8rem; }
-            .card { padding: 0.8rem 1rem; }
-            .file-item { padding: 0.4rem; }
-            .file-row { flex-wrap: wrap; }
-            .file-item .actions { margin-left: 0; }
-            h1 { font-size: 1.4rem; }
-            .status-bar { flex-direction: column; align-items: stretch; text-align: center; }
-        }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DLS Encoder</title>
+<style>
+:root{--bg:#0b0e14;--panel:#121722;--panel2:#181f2d;--line:#242d3f;--text:#e9eef7;--mute:#8a96ab;--a:#7c9cff;--b:#b18cff;--ok:#42d392;--bad:#ff6b7a;--r:16px;--font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(900px 500px at 15% -10%,#1b2447 0,transparent 60%),radial-gradient(700px 400px at 100% 0,#2a1b47 0,transparent 55%),var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;padding:28px 16px 60px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:1.9rem;letter-spacing:-.02em;font-weight:700}
+.sub{color:var(--mute);margin:6px 0 24px;font-size:.95rem}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.drop{border:1.5px dashed #34405a;border-radius:var(--r);padding:34px 16px;text-align:center;cursor:pointer;transition:.2s;background:var(--panel2)}
+.drop:hover,.drop.over{border-color:var(--a);background:#1a2340}
+.drop b{display:block;font-size:1.05rem;margin-bottom:4px}
+.drop span{color:var(--mute);font-size:.85rem}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.files{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.f{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.f .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
+.f .s{color:var(--mute);font-size:.78rem;white-space:nowrap}
+.f button{background:none;border:0;color:var(--mute);font-size:1rem;cursor:pointer}
+.f button:hover{color:var(--bad)}
+.f.done{border-color:#1f5b44}.f.err{border-color:#6b2a33}
+label.t{display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:10px 12px;border:1px solid var(--line);border-radius:12px;flex:1 1 240px;background:var(--panel2)}
+label.t:has(input:checked){border-color:var(--a);background:#1a2340}
+label.t input{margin-top:3px;accent-color:var(--a)}
+label.t small{display:block;color:var(--mute);font-size:.78rem;margin-top:2px}
+.pw{position:relative;margin-top:14px}
+.pw input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 44px 12px 14px;color:var(--text);font-size:.95rem}
+.pw input:focus{outline:2px solid var(--a);border-color:transparent}
+.pw button{position:absolute;right:6px;top:6px;background:none;border:0;font-size:1.1rem;cursor:pointer;padding:6px}
+.bar{height:4px;background:var(--line);border-radius:4px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;transition:.2s}
+.hint{color:var(--mute);font-size:.78rem;margin-top:6px}
+.go{width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;font-weight:700;font-size:1rem;color:#0b0e14;cursor:pointer;background:linear-gradient(90deg,var(--a),var(--b));transition:.15s}
+.go:hover:not(:disabled){filter:brightness(1.1)}.go:disabled{opacity:.45;cursor:not-allowed}
+.prog{display:none;margin-top:16px}
+.prog .top{display:flex;justify-content:space-between;font-size:.82rem;color:var(--mute);gap:8px}
+.prog .top span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prog .bg{height:8px;background:var(--line);border-radius:8px;margin-top:6px;overflow:hidden}
+.prog .bg i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--b));transition:width .15s}
+.msg{margin-top:12px;font-size:.88rem;display:none;padding:10px 12px;border-radius:10px}
+.msg.ok{display:block;background:#12281f;color:var(--ok)}.msg.bad{display:block;background:#2b141a;color:var(--bad)}
+footer{color:var(--mute);font-size:.75rem;text-align:center;margin-top:24px}
+</style>
 </head>
 <body>
+<div class="wrap">
+  <h1>DLS Encoder</h1>
+  <p class="sub">Pack one or many files into a single .dls archive. Big files are streamed in small pieces, so memory stays low.</p>
 
-    <div class="container" id="app">
-        <header style="margin-bottom:1.2rem;">
-            <h1>📦 DLS Encoder <small>· v6.4 – 512 MB chunks · .dls extension fixed</small></h1>
-            <p class="subhead">Convert even 700+ MB files reliably – no memory blow‑up, no .json extension.</p>
-        </header>
+  <div class="card">
+    <div class="drop" id="drop"><b>Drop files here or tap to choose</b><span>Add as many as you like. Large files are fine.</span></div>
+    <input type="file" id="inp" multiple hidden>
+    <div class="files" id="list"></div>
+  </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h2>📂 Select Files</h2>
-                <span class="text-muted" id="fileCount">0 files</span>
-            </div>
-            <div class="file-input-wrap">
-                <input type="file" id="fileInput" multiple />
-            </div>
-            <div style="margin-top:0.8rem;">
-                <button class="btn" id="convertBtn" disabled style="width:100%;justify-content:center;">
-                    ⚡ Convert All
-                </button>
-            </div>
-            <div class="conversion-progress" id="progressWrap" style="display:none;">
-                <div class="progress-labels">
-                    <span id="progressLabel">Encoding…</span>
-                    <span id="progressPercent">0%</span>
-                </div>
-                <div class="bar-bg"><div class="bar-fill" id="progressFill"></div></div>
-            </div>
-        </div>
-
-        <div class="card" id="fileListCard">
-            <div class="card-header">
-                <h2>📋 Selected Files</h2>
-                <span class="text-muted" id="listFileCount">0</span>
-            </div>
-            <div id="fileListContainer">
-                <div class="empty-state"><div class="icon">📭</div><p>No files selected yet.</p></div>
-            </div>
-            <div class="status-bar" id="statusBar">
-                <span class="progress-text">Ready</span>
-                <span class="count" id="statusCount">—</span>
-            </div>
-        </div>
-
-        <footer style="margin-top:1.5rem;font-size:0.75rem;color:var(--text-muted);text-align:center;border-top:1px solid var(--border);padding-top:1rem;">
-            DLS Encoder v6.4 · AES-256-CBC · PBKDF2 600k · up to 512 MB chunks · .dls extension
-        </footer>
+  <div class="card">
+    <div class="row">
+      <label class="t"><input type="radio" name="mode" value="single" checked><div>One archive<small>All files inside a single .dls</small></div></label>
+      <label class="t"><input type="radio" name="mode" value="each"><div>One per file<small>Each file gets its own .dls</small></div></label>
     </div>
+    <div class="pw">
+      <input type="password" id="pwd" placeholder="Password (optional, leave blank for no encryption)" autocomplete="new-password">
+      <button id="eye" type="button" aria-label="Show password">👁️</button>
+    </div>
+    <div class="bar"><i id="str"></i></div>
+    <p class="hint" id="strTxt">No password: files are packed but not encrypted.</p>
+    <button class="go" id="go" disabled>Create .dls</button>
+    <div class="prog" id="prog"><div class="top"><span id="pl">Starting…</span><span id="pp">0%</span></div><div class="bg"><i id="pf"></i></div></div>
+    <div class="msg" id="msg"></div>
+  </div>
+  <footer>DLS v2 · AES-256-GCM · PBKDF2-SHA256 600k · 8 MB chunks</footer>
+</div>
 
-    <div class="toast" id="toast"></div>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const CHUNK = 8 * 1024 * 1024, ITER = 600000;
+const enc = new TextEncoder();
+let files = [], busy = false;
 
-    <script>
-        (() => {
-            'use strict';
+/* ---------- UI ---------- */
+const fmt = b => b >= 1073741824 ? (b/1073741824).toFixed(2)+' GB' : (b/1048576).toFixed(b<1048576?3:1)+' MB';
+function render() {
+  $('list').innerHTML = '';
+  files.forEach((f, i) => {
+    const d = document.createElement('div');
+    d.className = 'f' + (f._st === 'done' ? ' done' : f._st === 'err' ? ' err' : '');
+    d.innerHTML = '<span>' + (f._st==='done'?'✅':f._st==='err'?'❌':'📄') + '</span><span class="n"></span><span class="s">' + fmt(f.size) + '</span><button title="Remove">✕</button>';
+    d.querySelector('.n').textContent = f.name;
+    d.querySelector('button').onclick = () => { if (!busy) { files.splice(i,1); render(); } };
+    $('list').appendChild(d);
+  });
+  $('go').disabled = !files.length || busy;
+  $('go').textContent = files.length > 1 ? `Create .dls from ${files.length} files` : 'Create .dls';
+}
+function add(list) {
+  for (const f of list) if (!files.some(x => x.name===f.name && x.size===f.size && x.lastModified===f.lastModified)) files.push(f);
+  render();
+}
+$('drop').onclick = () => $('inp').click();
+$('inp').onchange = e => { add(e.target.files); e.target.value = ''; };
+['dragenter','dragover'].forEach(t => $('drop').addEventListener(t, e => { e.preventDefault(); $('drop').classList.add('over'); }));
+['dragleave','drop'].forEach(t => $('drop').addEventListener(t, e => { e.preventDefault(); $('drop').classList.remove('over'); }));
+$('drop').addEventListener('drop', e => add(e.dataTransfer.files));
+$('eye').onclick = () => { const p = $('pwd'); p.type = p.type==='password' ? 'text' : 'password'; };
+$('pwd').oninput = () => {
+  const p = $('pwd').value; let s = 0;
+  if (p.length>=8) s++; if (p.length>=12) s++; if (/[a-z]/.test(p)&&/[A-Z]/.test(p)) s++; if (/\d/.test(p)&&/[^\w]/.test(p)) s++;
+  const bar = $('str'); bar.style.width = p ? (s*25)+'%' : '0'; bar.style.background = s<=1?'var(--bad)':s<=2?'#f0a24b':'var(--ok)';
+  $('strTxt').textContent = !p ? 'No password: files are packed but not encrypted.' : ['Weak','Weak','Okay','Good','Strong'][s] + ' password. You cannot recover files without it.';
+};
+function msg(t, k) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + k; }
+function prog(label, pct) { $('prog').style.display = 'block'; $('pl').textContent = label; $('pp').textContent = Math.round(pct)+'%'; $('pf').style.width = pct+'%'; }
 
-            // ─── DOM refs ──────────────────────────────────────────────
-            const fileInput = document.getElementById('fileInput');
-            const convertBtn = document.getElementById('convertBtn');
-            const fileListContainer = document.getElementById('fileListContainer');
-            const fileCount = document.getElementById('fileCount');
-            const listFileCount = document.getElementById('listFileCount');
-            const statusBar = document.getElementById('statusBar');
-            const statusCount = document.getElementById('statusCount');
-            const toast = document.getElementById('toast');
-            const progressWrap = document.getElementById('progressWrap');
-            const progressFill = document.getElementById('progressFill');
-            const progressPercent = document.getElementById('progressPercent');
-            const progressLabel = document.getElementById('progressLabel');
+/* ---------- Crypto ---------- */
+async function getKey(pw, salt) {
+  const km = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:ITER, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, ['encrypt']);
+}
+async function gzip(u8) {
+  if (!window.CompressionStream) return null;
+  try { return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()); }
+  catch { return null; }
+}
+const NOCOMP = /^(video|audio|image)\/|zip|rar|7z|gzip|bzip|compressed|octet-stream/i;
+const NOCOMP_EXT = /\.(mp4|mkv|mov|avi|webm|mp3|aac|flac|ogg|m4a|jpe?g|png|gif|webp|zip|rar|7z|gz|bz2|xz|apk)$/i;
 
-            let selectedFiles = [];
-            let isConverting = false;
+/* ---------- Writers ---------- */
+// Streams to disk when the browser allows it, otherwise to a Blob (browsers keep big Blobs on disk, not in RAM).
+async function openWriter(name, usePicker) {
+  if (usePicker && window.showSaveFilePicker) {
+    const h = await window.showSaveFilePicker({suggestedName:name, types:[{description:'DLS archive', accept:{'application/octet-stream':['.dls']}}]});
+    const w = await h.createWritable();
+    return { write: u8 => w.write(u8), close: () => w.close(), abort: () => w.abort().catch(()=>{}) };
+  }
+  let parts = [], n = 0;
+  return {
+    write: async u8 => { parts.push(u8); if (++n % 8 === 0) parts = [new Blob(parts)]; },
+    close: async () => {
+      const url = URL.createObjectURL(new Blob(parts, {type:'application/octet-stream'}));
+      const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
+    },
+    abort: async () => { parts = []; }
+  };
+}
 
-            // ─── Scroll persistence ────────────────────────────────────
-            function saveScroll() { localStorage.setItem('dls_encoder_scroll', String(window.scrollY)); }
-            window.addEventListener('scroll', saveScroll);
-            window.addEventListener('load', () => {
-                const pos = localStorage.getItem('dls_encoder_scroll');
-                if (pos) { const y = parseInt(pos, 10); if (!isNaN(y)) window.scrollTo(0, y); }
-            });
+/* ---------- Format (DLS v2, big-endian) ----------
+ Header: "DLS2" | version u8=2 | encrypted u8 | iterations u32 | salt 16B
+ Records: type u8 | length u32 | payload      (seq number starts at 0, +1 per record)
+   1 = file start  (payload plaintext: JSON {name,type,size,lastModified})
+   2 = data chunk  (payload plaintext: flag u8 [0 raw, 1 gzip] + bytes)
+   3 = file end    (payload plaintext: empty)
+   255 = archive end (payload plaintext: JSON {files:n})
+ If encrypted: payload = iv(12B) + AES-GCM(plaintext, additionalData = seq as u32 BE).
+*/
+async function writeArchive(list, pw, out, onProgress) {
+  const encrypted = !!pw;
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = encrypted ? await getKey(pw, salt) : null;
+  const head = new Uint8Array(26), hv = new DataView(head.buffer);
+  head.set(enc.encode('DLS2')); hv.setUint8(4, 2); hv.setUint8(5, encrypted ? 1 : 0); hv.setUint32(6, ITER); head.set(salt, 10);
+  await out.write(head);
+  let seq = 0;
+  const rec = async (type, plain) => {
+    let payload = plain;
+    if (encrypted) {
+      const iv = crypto.getRandomValues(new Uint8Array(12)), aad = new Uint8Array(4);
+      new DataView(aad.buffer).setUint32(0, seq);
+      const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv, additionalData:aad}, key, plain));
+      payload = new Uint8Array(12 + ct.length); payload.set(iv); payload.set(ct, 12);
+    }
+    const r = new Uint8Array(5 + payload.length);
+    r[0] = type; new DataView(r.buffer).setUint32(1, payload.length); r.set(payload, 5);
+    seq++; await out.write(r);
+  };
+  const total = list.reduce((s, f) => s + f.size, 0) || 1; let done = 0;
+  for (const f of list) {
+    await rec(1, enc.encode(JSON.stringify({name:f.name, type:f.type||'application/octet-stream', size:f.size, lastModified:f.lastModified})));
+    const tryComp = !(NOCOMP.test(f.type) || NOCOMP_EXT.test(f.name));
+    for (let off = 0; off < f.size; off += CHUNK) {
+      let raw = new Uint8Array(await f.slice(off, off + CHUNK).arrayBuffer()), flag = 0;
+      if (tryComp) { const c = await gzip(raw); if (c && c.length < raw.length) { raw = c; flag = 1; } }
+      const p = new Uint8Array(1 + raw.length); p[0] = flag; p.set(raw, 1);
+      await rec(2, p);
+      done += Math.min(CHUNK, f.size - off);
+      onProgress(f.name, done / total * 100);
+      await new Promise(r => setTimeout(r, 0));
+    }
+    await rec(3, new Uint8Array(0));
+  }
+  await rec(255, enc.encode(JSON.stringify({files:list.length})));
+}
 
-            // ─── Toast ──────────────────────────────────────────────────
-            let toastTimer = null;
-            function showToast(msg, type = 'info', duration = 3000) {
-                if (toastTimer) { clearTimeout(toastTimer); toast.classList.remove('show','error','success'); }
-                toast.textContent = msg;
-                toast.className = 'toast';
-                if (type === 'error') toast.classList.add('error');
-                if (type === 'success') toast.classList.add('success');
-                void toast.offsetWidth;
-                toast.classList.add('show');
-                toastTimer = setTimeout(() => { toast.classList.remove('show'); toastTimer = null; }, duration);
-            }
-
-            // ─── Helpers ──────────────────────────────────────────────
-            function arrayBufferToBase64(buffer) {
-                const bytes = new Uint8Array(buffer);
-                let binary = '';
-                const chunkSize = 8192;
-                for (let i = 0; i < bytes.length; i += chunkSize) {
-                    const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
-                    binary += String.fromCharCode.apply(null, chunk);
-                }
-                return btoa(binary);
-            }
-            function getFileCategory(file) {
-                const ext = file.name.split('.').pop().toLowerCase();
-                const mime = file.type.toLowerCase();
-                const map = {
-                    'audio': ['mp3','wav','flac','aac','ogg','wma','m4a'],
-                    'video': ['mp4','mkv','avi','mov','wmv','flv','webm','m4v'],
-                    'image': ['jpg','jpeg','png','gif','bmp','webp','svg','tiff','ico'],
-                    'document': ['pdf','doc','docx','txt','rtf','odt','xls','xlsx','ppt','pptx','md','csv'],
-                    'apk': ['apk'],
-                    'archive': ['zip','rar','7z','tar','gz','bz2','xz']
-                };
-                if (mime.startsWith('audio/')) return 'audio';
-                if (mime.startsWith('video/')) return 'video';
-                if (mime.startsWith('image/')) return 'image';
-                if (mime === 'application/vnd.android.package-archive') return 'apk';
-                for (const [cat, exts] of Object.entries(map)) if (exts.includes(ext)) return cat;
-                return 'other';
-            }
-            function getCategoryBadge(cat) {
-                const labels = { audio:'🎵 Audio', video:'🎬 Video', image:'🖼️ Image', document:'📄 Document', apk:'📱 APK', archive:'📦 Archive', other:'📎 Other' };
-                return labels[cat] || '📎 Other';
-            }
-            function formatSize(bytes) {
-                if (bytes === 0) return '0 MB';
-                const mb = bytes / (1024 * 1024);
-                if (mb < 0.01) return '< 0.01 MB';
-                return mb.toFixed(2) + ' MB';
-            }
-            function escapeHtml(str) {
-                const div = document.createElement('div');
-                div.textContent = str;
-                return div.innerHTML;
-            }
-            function getPasswordStrength(pwd) {
-                if (!pwd) return 0;
-                let score = 0;
-                if (pwd.length >= 8) score++;
-                if (pwd.length >= 12) score++;
-                if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
-                if (/\d/.test(pwd)) score++;
-                if (/[^a-zA-Z0-9]/.test(pwd)) score++;
-                if (pwd.length >= 16) score++;
-                return Math.min(4, score);
-            }
-
-            // ─── Smart compression check ──────────────────────────────
-            function shouldCompress(mimeType) {
-                const skip = [
-                    'video/', 'audio/', 'image/',
-                    'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed',
-                    'application/x-tar', 'application/gzip', 'application/x-bzip2',
-                    'application/x-compressed', 'application/x-zip-compressed',
-                    'application/x-rar', 'application/octet-stream'
-                ];
-                for (const s of skip) if (mimeType.startsWith(s)) return false;
-                const ext = mimeType.split('/').pop().toLowerCase();
-                if (['mp4','mkv','avi','mov','wmv','flv','webm','m4v'].includes(ext)) return false;
-                if (['mp3','wav','flac','aac','ogg','wma','m4a'].includes(ext)) return false;
-                if (['jpg','jpeg','png','gif','bmp','webp','svg','tiff'].includes(ext)) return false;
-                return true;
-            }
-
-            // ─── Dynamic chunk size (up to 512 MB) ────────────────────
-            function getChunkSize(fileSize) {
-                if (fileSize > 500 * 1024 * 1024) return 512 * 1024 * 1024; // 512 MB
-                if (fileSize > 200 * 1024 * 1024) return 128 * 1024 * 1024; // 128 MB
-                return 64 * 1024 * 1024; // 64 MB
-            }
-
-            // ─── Encryption helpers ────────────────────────────────────
-            const PBKDF2_ITERATIONS = 600000;
-            async function deriveKey(password, salt) {
-                const enc = new TextEncoder();
-                const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-                return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, keyMaterial, { name: 'AES-CBC', length: 256 }, false, ['encrypt', 'decrypt']);
-            }
-            async function encryptData(dataArrayBuffer, password) {
-                const salt = crypto.getRandomValues(new Uint8Array(16));
-                const iv = crypto.getRandomValues(new Uint8Array(16));
-                const key = await deriveKey(password, salt);
-                const encrypted = await crypto.subtle.encrypt({ name: 'AES-CBC', iv }, key, dataArrayBuffer);
-                return { salt: arrayBufferToBase64(salt), iv: arrayBufferToBase64(iv), data: arrayBufferToBase64(encrypted) };
-            }
-
-            // ─── Compression helper ───────────────────────────────────
-            async function compressChunk(arrayBuffer) {
-                if (!window.CompressionStream) return arrayBuffer;
-                try {
-                    const blob = new Blob([arrayBuffer]);
-                    const stream = blob.stream().pipeThrough(new CompressionStream('gzip'));
-                    const compressedBlob = await new Response(stream).blob();
-                    return await compressedBlob.arrayBuffer();
-                } catch (_) { return arrayBuffer; }
-            }
-
-            // ─── Process file with streaming JSON parts ──────────────
-            async function* processFileStream(file, password) {
-                const useEncryption = password && password.length > 0;
-                const fileSize = file.size;
-                const chunkSize = getChunkSize(fileSize);
-                const compress = shouldCompress(file.type);
-
-                // Metadata
-                const metaObj = { fileName: file.name, fileType: file.type || 'application/octet-stream', fileSize: file.size };
-                const metaJson = JSON.stringify(metaObj);
-                const metaBuffer = new TextEncoder().encode(metaJson).buffer;
-                let encryptedMeta = false;
-                let metaSalt = '', metaIv = '', metaData = '';
-                if (useEncryption) {
-                    const result = await encryptData(metaBuffer, password);
-                    encryptedMeta = true;
-                    metaSalt = result.salt;
-                    metaIv = result.iv;
-                    metaData = result.data;
-                } else {
-                    metaData = arrayBufferToBase64(metaBuffer);
-                }
-
-                // Prefix
-                const prefix = `{"version":"1.0","chunked":true,"chunkSize":${chunkSize},"encryptedMeta":${encryptedMeta ? 'true' : 'false'},"metaSalt":"${metaSalt}","metaIv":"${metaIv}","metaData":"${metaData}","compressed":${compress ? 'true' : 'false'},"chunks":[`;
-                yield prefix;
-
-                let offset = 0;
-                let chunkIndex = 0;
-                let first = true;
-
-                while (offset < fileSize) {
-                    const end = Math.min(offset + chunkSize, fileSize);
-                    const chunkBlob = file.slice(offset, end);
-                    let chunkBuffer = await chunkBlob.arrayBuffer();
-
-                    if (compress) {
-                        try { chunkBuffer = await compressChunk(chunkBuffer); } catch (_) {}
-                    }
-
-                    let encrypted = false;
-                    let salt = '', iv = '', data = '';
-                    if (useEncryption) {
-                        const result = await encryptData(chunkBuffer, password);
-                        encrypted = true;
-                        salt = result.salt;
-                        iv = result.iv;
-                        data = result.data;
-                    } else {
-                        data = arrayBufferToBase64(chunkBuffer);
-                    }
-
-                    const chunkObj = { index: chunkIndex, encrypted, salt, iv, data };
-                    const chunkJson = JSON.stringify(chunkObj);
-                    if (!first) yield ',';
-                    first = false;
-                    yield chunkJson;
-
-                    offset = end;
-                    chunkIndex++;
-                    // Yield control to browser for GC and UI updates
-                    await new Promise(r => setTimeout(r, 20));
-                }
-
-                yield ']}';
-            }
-
-            // ─── Streaming download ───────────────────────────────────
-            async function downloadDLSFromStream(file, password, originalName) {
-                const parts = [];
-                for await (const part of processFileStream(file, password)) {
-                    parts.push(part);
-                }
-                // Build blob with octet-stream to avoid .json extension
-                const blob = new Blob(parts, { type: 'application/octet-stream' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                // Remove any existing extension and add .dls
-                const baseName = originalName.replace(/\.[^.]+$/, '') || originalName;
-                a.download = `${baseName}.dls`;
-                a.href = url;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 5000);
-                // Clear parts to free memory
-                parts.length = 0;
-            }
-
-            // ─── Render file list ──────────────────────────────────────
-            function renderFileList() {
-                const container = fileListContainer;
-                if (selectedFiles.length === 0) {
-                    container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No files selected yet.</p></div>`;
-                    fileCount.textContent = '0 files';
-                    listFileCount.textContent = '0';
-                    updateConvertButton();
-                    return;
-                }
-                let html = '<div class="file-list">';
-                selectedFiles.forEach((f, idx) => {
-                    const cat = getFileCategory(f);
-                    const size = formatSize(f.size);
-                    const statusIcon = f._status === 'done' ? '✅' : f._status === 'error' ? '❌' : '';
-                    const extraClass = f._status === 'done' ? ' done' : f._status === 'error' ? ' error-item' : '';
-                    let displayName = f.name;
-                    if (displayName.length > 30) {
-                        const extIdx = displayName.lastIndexOf('.');
-                        if (extIdx > 0) {
-                            const ext = displayName.slice(extIdx);
-                            const base = displayName.slice(0, extIdx);
-                            displayName = base.slice(0, 24) + '…' + ext;
-                        } else { displayName = displayName.slice(0, 28) + '…'; }
-                    }
-                    let downloadBtn = '';
-                    if (f._status === 'done' && f._container) {
-                        downloadBtn = `<button class="download-btn" data-download="${idx}" title="Download .dls">⬇️</button>`;
-                    }
-                    const pwd = f._password || '';
-                    const strength = getPasswordStrength(pwd);
-                    const strengthLabels = ['', 'Weak', 'Weak', 'Medium', 'Strong'];
-                    const strengthClass = strength === 1 ? 'weak' : strength === 2 ? 'weak' : strength === 3 ? 'medium' : strength === 4 ? 'strong' : '';
-
-                    html += `
-                        <div class="file-item${extraClass}" data-index="${idx}">
-                            <div class="file-row">
-                                <span class="status-icon">${statusIcon}</span>
-                                <span class="name" title="${escapeHtml(f.name)}">${escapeHtml(displayName)}</span>
-                                <span class="meta">
-                                    <span class="badge ${cat}">${getCategoryBadge(cat)}</span>
-                                    <span>${size}</span>
-                                </span>
-                                <div class="actions">
-                                    ${downloadBtn}
-                                    <button class="remove-btn" data-remove="${idx}" title="Remove">✕</button>
-                                </div>
-                            </div>
-                            <div class="pwd-group">
-                                <input type="password" class="file-pwd" data-idx="${idx}" placeholder="Password (optional)" autocomplete="new-password" />
-                                <button class="toggle-pwd" data-idx="${idx}" title="Show/hide password">👁️</button>
-                                <span class="pwd-hint" style="font-size:0.65rem;color:var(--text-muted);opacity:0.7;">leave blank = no encryption</span>
-                            </div>
-                            <div class="strength-bar">
-                                ${[0,1,2,3].map(i => `<div class="segment ${i < strength ? 'active ' + strengthClass : ''}"></div>`).join('')}
-                            </div>
-                            <div class="strength-label">${strength > 0 ? strengthLabels[strength] : ' '}</div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                container.innerHTML = html;
-                fileCount.textContent = `${selectedFiles.length} files`;
-                listFileCount.textContent = `${selectedFiles.length}`;
-                updateConvertButton();
-
-                container.querySelectorAll('[data-remove]').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const idx = parseInt(btn.dataset.remove, 10);
-                        if (!isNaN(idx)) {
-                            selectedFiles.splice(idx, 1);
-                            renderFileList();
-                            fileInput.value = '';
-                            showToast('File removed', 'info', 1500);
-                        }
-                    });
-                });
-                // Download handlers (re-download) – we don't store container, so we'll just warn.
-                container.querySelectorAll('[data-download]').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        showToast('Re-download not supported; convert again if needed.', 'info', 2000);
-                    });
-                });
-                container.querySelectorAll('.file-pwd').forEach(inp => {
-                    const idx = parseInt(inp.dataset.idx, 10);
-                    inp.addEventListener('input', (e) => {
-                        if (!isNaN(idx) && selectedFiles[idx]) {
-                            selectedFiles[idx]._password = inp.value;
-                            updateStrengthBar(inp);
-                        }
-                    });
-                    const toggleBtn = inp.parentElement.querySelector('.toggle-pwd');
-                    if (toggleBtn) {
-                        toggleBtn.addEventListener('click', () => {
-                            const type = inp.getAttribute('type') === 'password' ? 'text' : 'password';
-                            inp.setAttribute('type', type);
-                            toggleBtn.textContent = type === 'password' ? '👁️' : '🙈';
-                        });
-                    }
-                    updateStrengthBar(inp);
-                });
-            }
-
-            function updateStrengthBar(inp) {
-                const pwd = inp.value;
-                const strength = getPasswordStrength(pwd);
-                const parent = inp.closest('.file-item');
-                if (!parent) return;
-                const segments = parent.querySelectorAll('.strength-bar .segment');
-                const label = parent.querySelector('.strength-label');
-                const classes = ['', 'weak', 'weak', 'medium', 'strong'];
-                segments.forEach((seg, i) => {
-                    seg.className = 'segment';
-                    if (i < strength) seg.classList.add('active', classes[strength]);
-                });
-                const labels = ['', 'Weak', 'Weak', 'Medium', 'Strong'];
-                label.textContent = strength > 0 ? labels[strength] : '';
-            }
-
-            // ─── File selection ────────────────────────────────────────
-            fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                if (files.length === 0) return;
-                selectedFiles = [];
-                for (const f of files) {
-                    f._status = 'pending';
-                    f._password = '';
-                    selectedFiles.push(f);
-                }
-                renderFileList();
-                fileInput.value = '';
-                showToast(`Selected ${files.length} file(s)`, 'success', 1500);
-            });
-
-            // drag & drop
-            const fileInputWrap = document.querySelector('.file-input-wrap');
-            ['dragover','dragenter'].forEach(evt => {
-                fileInputWrap.addEventListener(evt, (e) => { e.preventDefault(); fileInputWrap.querySelector('input').classList.add('drag-over'); });
-            });
-            ['dragleave','drop'].forEach(evt => {
-                fileInputWrap.addEventListener(evt, (e) => { e.preventDefault(); fileInputWrap.querySelector('input').classList.remove('drag-over'); });
-            });
-            fileInputWrap.addEventListener('drop', (e) => {
-                e.preventDefault();
-                const files = Array.from(e.dataTransfer.files);
-                if (files.length === 0) return;
-                selectedFiles = [];
-                for (const f of files) { f._status = 'pending'; f._password = ''; selectedFiles.push(f); }
-                renderFileList();
-                fileInput.value = '';
-                showToast(`Selected ${files.length} file(s)`, 'success', 1500);
-            });
-
-            function updateConvertButton() {
-                convertBtn.disabled = selectedFiles.length === 0 || isConverting;
-            }
-
-            // ─── Convert All ──────────────────────────────────────────
-            convertBtn.addEventListener('click', async () => {
-                if (isConverting) return;
-                if (selectedFiles.length === 0) { showToast('No files to convert.', 'error'); return; }
-                if (!window.crypto || !window.crypto.subtle) {
-                    showToast('❌ Web Crypto API not available. Use HTTPS or localhost.', 'error', 5000);
-                    return;
-                }
-                isConverting = true;
-                convertBtn.disabled = true;
-                convertBtn.innerHTML = '<span class="spinner"></span> Converting…';
-                statusBar.querySelector('.progress-text').textContent = 'Converting…';
-                statusCount.textContent = `0 / ${selectedFiles.length}`;
-
-                progressWrap.style.display = 'block';
-                progressFill.style.width = '0%';
-                progressPercent.textContent = '0%';
-                progressLabel.textContent = 'Starting…';
-
-                let successCount = 0, failCount = 0;
-                for (let i = 0; i < selectedFiles.length; i++) {
-                    const file = selectedFiles[i];
-                    const pct = Math.round(((i) / selectedFiles.length) * 100);
-                    progressFill.style.width = pct + '%';
-                    progressPercent.textContent = pct + '%';
-                    progressLabel.textContent = `Processing: ${escapeHtml(file.name)}`;
-                    statusCount.textContent = `${i + 1} / ${selectedFiles.length}`;
-
-                    const password = file._password || '';
-                    try {
-                        await downloadDLSFromStream(file, password, file.name);
-                        file._status = 'done';
-                        successCount++;
-                        await new Promise(r => setTimeout(r, 300));
-                    } catch (err) {
-                        console.error('Conversion error for', file.name, err);
-                        file._status = 'error';
-                        failCount++;
-                        showToast(`Failed: ${file.name} — ${err.message || 'unknown error'}`, 'error', 4000);
-                    }
-                    renderFileList();
-                }
-
-                progressFill.style.width = '100%';
-                progressPercent.textContent = '100%';
-                progressLabel.textContent = 'Done!';
-                isConverting = false;
-                convertBtn.disabled = false;
-                convertBtn.innerHTML = '⚡ Convert All';
-                statusBar.querySelector('.progress-text').textContent = 'Done';
-                statusCount.textContent = `${successCount} / ${selectedFiles.length} files`;
-
-                if (failCount === 0 && successCount === selectedFiles.length) {
-                    showToast(`✅ All ${successCount} files converted successfully!`, 'success', 4000);
-                } else if (successCount > 0) {
-                    showToast(`⚠️ ${successCount} converted, ${failCount} failed.`, 'error', 4000);
-                } else {
-                    showToast(`❌ All ${selectedFiles.length} files failed.`, 'error', 4000);
-                }
-                setTimeout(() => {
-                    statusBar.querySelector('.progress-text').textContent = 'Ready';
-                    statusCount.textContent = '—';
-                    progressWrap.style.display = 'none';
-                }, 5000);
-            });
-
-            // ─── Init ──────────────────────────────────────────────────
-            renderFileList();
-            updateConvertButton();
-
-            console.log('📦 DLS Encoder v6.4 ready (512 MB chunks, .dls extension)');
-        })();
-    </script>
+/* ---------- Run ---------- */
+$('go').onclick = async () => {
+  if (busy || !files.length) return;
+  if (!window.crypto?.subtle) { msg('Encryption needs HTTPS or localhost. Open this page from a secure address.', 'bad'); return; }
+  busy = true; render(); $('msg').className = 'msg'; $('go').disabled = true;
+  files.forEach(f => f._st = '');
+  const pw = $('pwd').value, single = document.querySelector('input[name=mode]:checked').value === 'single';
+  const jobs = single ? [{list:files, name:(files.length===1 ? files[0].name.replace(/\.[^.]+$/,'') : 'archive') + '.dls'}]
+                      : files.map(f => ({list:[f], name:f.name.replace(/\.[^.]+$/,'') + '.dls'}));
+  let ok = 0;
+  try {
+    for (let j = 0; j < jobs.length; j++) {
+      const job = jobs[j];
+      let out;
+      // Save dialog must open right on the tap, so only for the first/only output.
+      try { out = await openWriter(job.name, jobs.length === 1); }
+      catch (e) { if (e.name === 'AbortError') { msg('Cancelled.', 'bad'); break; } throw e; }
+      try {
+        await writeArchive(job.list, pw, out, (n, p) => prog(n, (j + p/100) / jobs.length * 100));
+        await out.close(); job.list.forEach(f => f._st = 'done'); ok += job.list.length;
+      } catch (e) { await out.abort(); job.list.forEach(f => f._st = 'err'); console.error(e); msg('Failed: ' + (e.message || e), 'bad'); }
+      render();
+      await new Promise(r => setTimeout(r, 400));
+    }
+    prog('Done', 100);
+    if (ok === files.length) msg(`Saved ${jobs.length === 1 ? job_name(jobs[0]) : jobs.length + ' archives'}.`, 'ok');
+  } finally { busy = false; render(); }
+};
+const job_name = j => j.name;
+render();
+})();
+</script>
 </body>
 </html>
